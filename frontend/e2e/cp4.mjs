@@ -3,8 +3,8 @@ const { browser, page, errors } = await launch()
 await page.goto(BASE)
 await page.evaluate(() => { localStorage.clear(); localStorage.setItem('mb.profile', JSON.stringify({ name: 'Alex Morgan', stage: 'early_career', level: 'beginner', goals: ['investing'], dataSetup: 'demo' })); localStorage.setItem('mb.memory', 'true'); localStorage.setItem('mb.shareProfile', 'true') })
 await page.goto(BASE + '/twin'); await page.getByText('Illustrative ending value').waitFor()
-const ending = (await page.locator('main').innerText()).match(/Illustrative ending value\s+(\$[\d,]+)/)[1]
-await page.getByRole('button', { name: 'Explain This Scenario' }).click()
+const ending = (await page.locator('main').innerText()).match(/Illustrative ending value\s+(\$[\d,]+)/i)[1]
+await page.getByRole('button', { name: 'Explain This Scenario' }).first().click()
 await page.waitForURL('**/companion')
 const reply = page.locator('div.bg-canvas').last()
 await page.getByText('Used:').waitFor({ timeout: 90000 })

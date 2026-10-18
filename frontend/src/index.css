@@ -1,25 +1,98 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/geist";
 @import "tailwindcss";
 
+/* ───────── Design tokens: the single source of truth ─────────
+   Contrast notes (WCAG AA, 4.5:1 for text): ink/slate-900 on white 16:1, muted (slate-500) on white 5.4:1,
+   brand (600) on white 5.5:1, teal-dark (700) on white 6.6:1, danger (600) on white 5.6:1.
+   Brand-500 (#3676d8) is used for charts/graphics only, never for small text. */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --color-ink: #172a52;
-  --color-muted: #5b6b86;
-  --color-line: #e3eaf5;
-  --color-canvas: #f6f9fe;
-  --color-brand: #3676d8;
-  --color-brand-dark: #2a5db0;
-  --color-brand-soft: #eaf1fd;
-  --color-teal: #22a58a;
-  --color-teal-dark: #167a66;
-  --color-teal-soft: #e8f6f2;
-  --color-amber: #e8a03a;
-  --color-violet: #7b5fc9;
-  --color-danger: #c2410c;
-  --color-danger-soft: #fff1ea;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Geist Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* neutral scale (cool slate) */
+  --color-slate-25: #fafbfd; --color-slate-50: #f5f7fb; --color-slate-100: #eceff5; --color-slate-200: #dde3ed;
+  --color-slate-300: #c3ccdb; --color-slate-400: #94a1b8; --color-slate-500: #5b6780; --color-slate-600: #4d5a73;
+  --color-slate-700: #364157; --color-slate-800: #232d44; --color-slate-900: #141c30;
+  /* brand blue */
+  --color-blue-50: #eef4ff; --color-blue-100: #dce8fd; --color-blue-200: #bcd3fb; --color-blue-300: #8fb5f6; --color-blue-400: #5a90ec;
+  --color-blue-500: #3676d8; --color-blue-600: #2c66c4; --color-blue-700: #234e98; --color-blue-800: #1f4079; --color-blue-900: #1b365f;
+  /* brand teal */
+  --color-teal-50: #ecf8f5; --color-teal-100: #d1f0e8; --color-teal-200: #a6e0d2; --color-teal-300: #6fcab5; --color-teal-400: #3fb39a;
+  --color-teal-500: #22a58a; --color-teal-600: #178a72; --color-teal-700: #146e5c; --color-teal-800: #12584b; --color-teal-900: #10493f;
+  /* accents + semantic */
+  --color-amber-500: #d98a1c; --color-amber-50: #fdf5e8; --color-violet-600: #6a4fc0; --color-violet-50: #f1edfb;
+  --color-red-600: #c0392b; --color-red-50: #fdf0ee;
+
+  /* semantic aliases used across components */
+  --color-ink: var(--color-slate-900);
+  --color-muted: var(--color-slate-500);
+  --color-line: var(--color-slate-200);
+  --color-canvas: var(--color-slate-50);
+  --color-brand: var(--color-blue-600);
+  --color-brand-dark: var(--color-blue-700);
+  --color-brand-soft: var(--color-blue-50);
+  --color-teal: var(--color-teal-500);
+  --color-teal-dark: var(--color-teal-700);
+  --color-teal-soft: var(--color-teal-50);
+  --color-amber: var(--color-amber-500);
+  --color-violet: var(--color-violet-600);
+  --color-danger: var(--color-red-600);
+  --color-danger-soft: var(--color-red-50);
+
+  /* radii */
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-xl: 18px; --radius-2xl: 22px;
+  /* elevation */
+  --shadow-xs: 0 1px 1px rgb(20 28 48 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(20 28 48 / 0.05), 0 0 0 1px rgb(20 28 48 / 0.02);
+  --shadow-md: 0 4px 12px -2px rgb(20 28 48 / 0.08), 0 2px 4px rgb(20 28 48 / 0.04);
+  --shadow-pop: 0 16px 40px -8px rgb(20 28 48 / 0.18), 0 4px 10px rgb(20 28 48 / 0.06);
+  /* type scale */
+  --text-2xs: 0.6875rem; --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem; --text-xs--line-height: 1.1rem;
+  --text-sm: 0.8125rem; --text-sm--line-height: 1.25rem;
+  --text-base: 0.9375rem; --text-base--line-height: 1.5rem;
+  --text-lg: 1.0625rem; --text-lg--line-height: 1.5rem;
+  --text-xl: 1.25rem; --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.625rem; --text-2xl--line-height: 2rem;
+  --text-3xl: 2rem; --text-3xl--line-height: 2.375rem;
+  --text-4xl: 2.5rem; --text-4xl--line-height: 2.75rem;
+  /* motion */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+html { font-size: 16px; }
 html, body, #root { min-height: 100%; }
-body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
-:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; border-radius: 6px; }
-input[type="range"] { accent-color: var(--color-brand); }
+body {
+  background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base);
+  font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+}
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.015em; }
+/* money / numerals: tabular, display face */
+.num { font-family: var(--font-display); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; font-feature-settings: "tnum"; }
 .tabular { font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: var(--text-2xs); font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-muted); }
+
+/* focus: one consistent, visible ring */
+:focus-visible { outline: 2px solid var(--color-blue-500); outline-offset: 2px; border-radius: var(--radius-sm); }
+/* text-like fields draw their own ring on the wrapper; sliders, checkboxes and buttons keep the global outline */
+input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):focus-visible, select:focus-visible { outline: none; }
+input, select, textarea, button { font: inherit; }
+input[type="range"] { accent-color: var(--color-blue-500); height: 1.25rem; cursor: pointer; }
+input[type="checkbox"] { accent-color: var(--color-blue-600); width: 1rem; height: 1rem; }
+::selection { background: var(--color-blue-100); }
+
+/* motion */
+@keyframes fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-in-right { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+.page-enter { animation: fade-up 0.28s var(--ease-out-quint) both; }
+.drawer-enter { animation: slide-in-right 0.22s var(--ease-out-quint) both; }
+.fade-in { animation: fade-in 0.2s ease-out both; }
+.skeleton { position: relative; overflow: hidden; background: var(--color-slate-100); border-radius: var(--radius-md); }
+.skeleton::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.7), transparent); animation: shimmer 1.4s infinite; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+  .skeleton::after { display: none; }
+}

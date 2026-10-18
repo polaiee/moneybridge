@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Banknote, CreditCard, LineChart, PiggyBank, Search, Sparkles, X } from 'lucide-react'
 import { api, type Category, type Comparison, type Product } from '../api'
-import { Badge, Button, Card, ErrorBox, PageHeader, Spinner } from '../components/ui'
+import { Badge, Button, EmptyState, ErrorBox, Eyebrow, PageHeader, Skeleton } from '../components/ui'
+import { friendlyError } from '../lib/errors'
 import { useStore } from '../store'
 
 const CATS: { id: Category; label: string; icon: typeof Banknote; blurb: string }[] = [
@@ -50,14 +51,14 @@ function ProductCard({ p, selected, onDetails, onCompare }: { p: Product; select
   const Icon = CATS.find((c) => c.id === p.category)!.icon
   const [head, ...rest] = FIELDS[p.category]
   return (
-    <article className="flex flex-col rounded-2xl border border-line bg-white p-5" aria-label={p.name}>
-      <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5 text-brand-dark"><Icon size={14} className="" />{CATS.find((c) => c.id === p.category)!.label}</span><Badge tone="demo">Demo Product</Badge></div>
-      <h3 className="mt-3 text-lg font-semibold">{p.name}</h3><p className="text-sm text-muted">{p.provider}</p>
-      <div className="mt-3 text-3xl font-semibold tabular">{fmt(head, p[head])}</div><div className="text-xs text-muted">{LABELS[head]}</div>
-      <dl className="mt-3 space-y-1 text-xs">{rest.slice(0, 2).map((k) => <div key={k} className="flex justify-between gap-3"><dt className="text-muted">{LABELS[k]}</dt><dd className="text-right font-medium">{fmt(k, p[k])}</dd></div>)}</dl>
+    <article className={`group flex flex-col rounded-xl border bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${selected ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line hover:border-slate-300'}`} aria-label={p.name}>
+      <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-1.5 font-semibold text-blue-700"><span className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50"><Icon size={13} /></span>{CATS.find((c) => c.id === p.category)!.label}</span><Badge tone="demo">Demo Product</Badge></div>
+      <h3 className="mt-3 text-base font-semibold">{p.name}</h3><p className="text-sm text-muted">{p.provider}</p>
+      <div className="num mt-3 text-3xl font-semibold">{fmt(head, p[head])}</div><Eyebrow className="mt-0.5">{LABELS[head]}</Eyebrow>
+      <dl className="mt-3 space-y-1.5 border-t border-line pt-3 text-xs">{rest.slice(0, 2).map((k) => <div key={k} className="flex justify-between gap-3"><dt className="text-muted">{LABELS[k]}</dt><dd className="text-right font-medium">{fmt(k, p[k])}</dd></div>)}</dl>
       <div className="mt-auto flex gap-2 pt-4">
         <Button onClick={onDetails} className="flex-1">View Details</Button>
-        <Button variant="secondary" aria-pressed={selected} onClick={onCompare}>{selected ? '✓ Compare' : 'Compare'}</Button>
+        <Button variant={selected ? 'primary' : 'secondary'} aria-pressed={selected} onClick={onCompare}>{selected ? '✓ Compare' : 'Compare'}</Button>
       </div>
     </article>
   )
@@ -118,15 +119,15 @@ export default function Marketplace() {
   return (
     <div className={sel.length ? 'pb-24' : ''}>
       <PageHeader eyebrow="Your next financial connection" title="Financial Marketplace" sub="Discover and compare financial products that support your goals." />
-      <label className="block"><span className="mb-1.5 block text-sm font-medium">Search</span>
-        <div className="flex items-center gap-2 rounded-xl border border-line bg-white px-4 focus-within:ring-2 focus-within:ring-brand/40"><Search size={16} className="text-muted" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products or providers…" className="w-full bg-transparent py-3 outline-none" /></div></label>
+      <label className="block"><span className="eyebrow mb-1.5 block">Search</span>
+        <div className="flex h-11 items-center gap-2 rounded-lg border border-line bg-white px-3.5 shadow-xs transition-shadow hover:border-slate-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/25"><Search size={16} className="text-muted" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search products or providers…" className="h-full w-full bg-transparent text-sm outline-none" /></div></label>
 
       <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4" role="group" aria-label="Categories">
         {CATS.map((c) => (
           <button key={c.id} aria-pressed={category === c.id} onClick={() => setCategory(c.id)}
-            className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition-colors ${category === c.id ? 'border-brand bg-brand-soft ring-1 ring-brand' : 'border-line bg-white hover:border-brand/50'}`}>
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand"><c.icon size={20} /></span>
+            className={`flex items-center gap-3 rounded-xl border p-3.5 text-left shadow-xs transition-all active:scale-[0.99] ${category === c.id ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-line bg-white hover:border-slate-300 hover:shadow-sm'}`}>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700"><c.icon size={18} /></span>
             <span><span className="block font-semibold">{c.label}</span><span className="block text-xs text-muted">{all.filter((p) => p.category === c.id).length} demo products</span></span>
           </button>))}
       </div>
@@ -137,18 +138,18 @@ export default function Marketplace() {
           <h2 className="text-xl font-semibold">Relevant to Your Goals</h2><p className="mb-3 text-sm text-muted">Based on the goals you chose. A starting point, not a recommendation.</p>
           <div className="grid gap-4 md:grid-cols-2">{recs.map((r) => {
             const c = CATS.find((x) => x.id === r.category)!; const copy = GOAL_COPY[r.goal]
-            return <button key={r.goal} onClick={() => setCategory(r.category)} className="flex items-start gap-3 rounded-2xl border border-line bg-white p-4 text-left hover:border-brand/50">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-soft text-teal-dark"><c.icon size={20} /></span>
-              <span><span className="block font-semibold">{copy.title}</span><span className="block text-sm text-muted">{copy.text}</span><span className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-brand-dark">Explore Products <ArrowRight size={14} /></span></span></button>
+            return <button key={r.goal} onClick={() => setCategory(r.category)} className="flex items-start gap-3 rounded-xl border border-line bg-white p-4 text-left shadow-xs transition-all hover:border-teal-300 hover:shadow-sm active:scale-[0.99]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-800"><c.icon size={18} /></span>
+              <span><span className="block font-semibold">{copy.title}</span><span className="block text-sm text-muted">{copy.text}</span><span className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-brand">Explore Products <ArrowRight size={14} /></span></span></button>
           })}</div>
         </section>)}
 
       <section className="mt-8">
         <h2 className="text-xl font-semibold">Explore Financial Products</h2><p className="mb-4 text-sm text-muted">Understand the details. Make your own connections.</p>
-        {err && <ErrorBox message={`Couldn’t load products (${err}).`} />}
-        {!list && !err && <Spinner />}
+        {err && <ErrorBox title="Marketplace unavailable" message={friendlyError(err, 'products')} onRetry={() => { setErr(null); setCategory(category) }} />}
+        {!list && !err && <div role="status" aria-label="Loading products" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="rounded-xl border border-line bg-white p-4"><Skeleton className="h-3 w-20" /><Skeleton className="mt-4 h-5 w-40" /><Skeleton className="mt-4 h-8 w-24" /><Skeleton className="mt-4 h-9 w-full" /></div>)}</div>}
         {notice && <div role="status" className="mb-3 rounded-xl bg-brand-soft p-3 text-sm text-brand-dark">{notice}</div>}
-        {list && list.length === 0 && <Card><p className="text-sm text-muted">No products match your search{category ? ` in ${category}` : ''}. Try a different term or clear the filter.</p></Card>}
+        {list && list.length === 0 && <EmptyState icon={<Search size={18} />} title="No products match" text={`Nothing matches your search${category ? ` in ${category}` : ''}. Try a different term or clear the filter.`} action={<Button variant="secondary" onClick={() => { setQ(''); setCategory(null) }}>Clear search and filters</Button>} />}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{list?.map((p) => <ProductCard key={p.id} p={p} selected={sel.includes(p.id)} onDetails={() => setOpen(p)} onCompare={() => toggleCompare(p)} />)}</div>
         <p className="mt-4 text-xs text-muted">{disclaimer} All providers are fictional.</p>
       </section>
@@ -156,12 +157,12 @@ export default function Marketplace() {
       {cmp && (
         <section ref={cmpRef} className="mt-10" aria-label="Comparison">
           <h2 className="text-xl font-semibold">A clearer view, side by side.</h2><p className="mb-3 text-sm text-muted">Comparing two {cmp.category} products</p>
-          <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+          <div className="overflow-x-auto rounded-xl border border-line bg-white shadow-sm">
             <table className="w-full min-w-[560px] text-sm">
-              <thead><tr className="bg-brand-soft/60 align-top"><th className="w-1/3 p-4 text-left text-xs font-semibold uppercase text-muted">Compare products</th>
+              <thead><tr className="bg-gradient-to-b from-blue-50 to-white align-top"><th className="eyebrow w-1/3 p-4 text-left">Compare products</th>
                 {cmp.products.map((p) => <th key={p.id} className="p-4 text-left"><Badge tone="demo">Demo Product</Badge><div className="mt-1 text-lg font-semibold">{p.name}</div><div className="text-xs font-normal text-muted">{p.provider}</div>
                   <div className="mt-1 flex gap-3 text-xs"><button onClick={() => remove(p.id)} className="font-semibold text-brand-dark">Remove ✕</button><button onClick={() => { remove(p.id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="font-semibold text-brand-dark">Replace ⇄</button></div></th>)}</tr></thead>
-              <tbody>{cmp.fields.map((f) => <tr key={f} className="border-t border-line"><th scope="row" className="p-4 text-left font-normal text-muted">{LABELS[f]}</th>{cmp.products.map((p) => <td key={p.id} className="p-4 font-medium">{fmt(f, p[f])}</td>)}</tr>)}</tbody>
+              <tbody>{cmp.fields.map((f) => <tr key={f} className="border-t border-line transition-colors hover:bg-slate-50"><th scope="row" className="p-4 text-left font-normal text-muted">{LABELS[f]}</th>{cmp.products.map((p) => <td key={p.id} className="num p-4 text-base font-medium">{fmt(f, p[f])}</td>)}</tr>)}</tbody>
             </table>
           </div>
           <p className="mt-3 text-xs text-muted">Check the conditions, not just the rate. Illustrative, not a recommendation. Missing information is marked “Not provided”.</p>
@@ -169,7 +170,7 @@ export default function Marketplace() {
         </section>)}
 
       {sel.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 px-4 py-3 backdrop-blur lg:left-64" role="region" aria-label="Comparison bar">
+        <div className="fade-in fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 px-4 py-3 shadow-pop backdrop-blur lg:left-60" role="region" aria-label="Comparison bar">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3">
             <div className="flex-1 text-sm"><b>{sel.length} of 2 selected</b> · {selCat} {selProducts.map((p) => <span key={p.id} className="ml-2 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-xs">{p.name}<button aria-label={`Remove ${p.name}`} onClick={() => remove(p.id)}><X size={12} /></button></span>)}</div>
             {cmpErr && <span className="text-xs text-danger">{cmpErr}</span>}
@@ -178,13 +179,13 @@ export default function Marketplace() {
         </div>)}
 
       {open && (
-        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={`${open.name} details`}>
-          <div className="absolute inset-0 bg-ink/40" onClick={() => setOpen(null)} />
-          <aside className="absolute inset-y-0 right-0 flex w-full flex-col overflow-y-auto bg-white p-6 shadow-2xl sm:w-[440px]">
+        <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label={`${open.name} details`}>
+          <div className="fade-in absolute inset-0 bg-slate-900/40" onClick={() => setOpen(null)} />
+          <aside className="drawer-enter absolute inset-y-0 right-0 flex w-full flex-col overflow-y-auto bg-white p-6 shadow-pop sm:w-[440px]">
             <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted">Product details<button onClick={() => setOpen(null)} className="flex items-center gap-1 normal-case">Close <X size={16} /></button></div>
             <div className="mt-5 flex items-center justify-between text-xs"><span className="capitalize text-brand-dark">{open.category}</span><Badge tone="demo">Demo Product</Badge></div>
             <h2 className="mt-1 text-2xl font-semibold">{open.name}</h2><p className="text-sm text-muted">{open.provider}</p><p className="mt-2 text-sm">{EDU[open.category].desc}</p>
-            <dl className="mt-4 divide-y divide-line rounded-xl bg-brand-soft/50 px-4 text-sm">{FIELDS[open.category].map((k) => <div key={k} className="flex justify-between gap-3 py-2.5"><dt className="text-muted">{LABELS[k]}</dt><dd className="text-right font-semibold">{fmt(k, open[k])}</dd></div>)}</dl>
+            <dl className="mt-4 divide-y divide-blue-100 rounded-xl bg-blue-50 px-4 text-sm">{FIELDS[open.category].map((k) => <div key={k} className="flex justify-between gap-3 py-2.5"><dt className="text-muted">{LABELS[k]}</dt><dd className="num text-right font-semibold">{fmt(k, open[k])}</dd></div>)}</dl>
             <h3 className="mt-5 text-sm font-semibold">Key features</h3><p className="text-sm text-muted">{EDU[open.category].features}</p>
             <h3 className="mt-4 text-sm font-semibold">Requirements</h3><p className="text-sm text-muted">{EDU[open.category].reqs}</p>
             <h3 className="mt-4 text-sm font-semibold">Risks and limitations</h3><p className="text-sm text-muted">{EDU[open.category].risks}</p>

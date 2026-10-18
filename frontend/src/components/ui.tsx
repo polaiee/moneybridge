@@ -1,10 +1,14 @@
 import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
-import { Info } from 'lucide-react'
+import { AlertTriangle, Info, RefreshCw } from 'lucide-react'
+import { useCountUp } from '../lib/useCountUp'
+import { usd } from '../lib/format'
 
-export function Card({ children, className = '', tone = 'white' }: { children: ReactNode; className?: string; tone?: 'white' | 'brand' | 'teal' }) {
-  const bg = tone === 'brand' ? 'bg-brand-soft/60' : tone === 'teal' ? 'bg-teal-soft' : 'bg-white'
-  return <section className={`rounded-2xl border border-line ${bg} p-5 sm:p-6 shadow-[0_1px_2px_rgba(23,42,82,0.04)] ${className}`}>{children}</section>
+export function Card({ children, className = '', tone = 'white' }: { children: ReactNode; className?: string; tone?: 'white' | 'brand' | 'teal' | 'dark' }) {
+  const bg = tone === 'brand' ? 'bg-gradient-to-b from-blue-50 to-white' : tone === 'teal' ? 'bg-teal-50' : tone === 'dark' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white'
+  return <section className={`rounded-xl border border-line ${bg} p-4 shadow-sm sm:p-5 ${className}`}>{children}</section>
 }
+
+export const Eyebrow = ({ children, className = '' }: { children: ReactNode; className?: string }) => <div className={`eyebrow ${className}`}>{children}</div>
 
 export function SectionHead({ title, sub, right }: { title: string; sub?: string; right?: ReactNode }) {
   return (
@@ -16,22 +20,26 @@ export function SectionHead({ title, sub, right }: { title: string; sub?: string
 }
 
 const TONES = {
-  demo: 'bg-teal-soft text-teal-dark border-teal/30',
-  hypo: 'bg-brand-soft text-brand-dark border-brand/30',
-  neutral: 'bg-canvas text-muted border-line',
-  warn: 'bg-danger-soft text-danger border-danger/30',
+  demo: 'bg-teal-50 text-teal-800 border-teal-200',
+  hypo: 'bg-blue-50 text-blue-800 border-blue-200',
+  illus: 'bg-violet-50 text-violet border-violet/25',
+  neutral: 'bg-slate-100 text-slate-600 border-slate-200',
+  warn: 'bg-red-50 text-danger border-danger/25',
 } as const
+const DOT = { demo: 'bg-teal-500', hypo: 'bg-blue-500', illus: 'bg-violet', neutral: 'bg-slate-400', warn: 'bg-danger' } as const
 export function Badge({ tone = 'neutral', children }: { tone?: keyof typeof TONES; children: ReactNode }) {
-  return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${TONES[tone]}`}>{children}</span>
+  return <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-2xs font-semibold leading-4 ${TONES[tone]}`}><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${DOT[tone]}`} />{children}</span>
 }
 export const DemoBadge = () => <Badge tone="demo">Demo data</Badge>
 export const HypoBadge = ({ children = 'Hypothetical' }: { children?: ReactNode }) => <Badge tone="hypo">{children}</Badge>
+export const IllusBadge = ({ children = 'Illustrative' }: { children?: ReactNode }) => <Badge tone="illus">{children}</Badge>
 
-export function Button({ variant = 'primary', className = '', ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' }) {
-  const v = variant === 'primary' ? 'bg-brand text-white hover:bg-brand-dark disabled:bg-brand/40'
-    : variant === 'secondary' ? 'bg-white text-brand-dark border border-line hover:bg-brand-soft disabled:opacity-50'
-    : 'text-brand-dark hover:bg-brand-soft disabled:opacity-50'
-  return <button {...p} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed ${v} ${className}`} />
+export function Button({ variant = 'primary', size = 'md', className = '', ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost'; size?: 'sm' | 'md' | 'lg' }) {
+  const v = variant === 'primary' ? 'bg-brand text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-300'
+    : variant === 'secondary' ? 'border border-line bg-white text-slate-800 shadow-xs hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50'
+    : 'text-brand hover:bg-blue-50 active:bg-blue-100 disabled:opacity-50'
+  const s = size === 'sm' ? 'h-8 px-3 text-xs' : size === 'lg' ? 'h-11 px-5 text-base' : 'h-9 px-3.5 text-sm'
+  return <button {...p} className={`inline-flex select-none items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-2 ${s} ${v} ${className}`} />
 }
 
 export function Tip({ text, children }: { text: string; children: ReactNode }) {
@@ -40,39 +48,61 @@ export function Tip({ text, children }: { text: string; children: ReactNode }) {
     <span className="relative inline-flex items-center gap-1">
       {children}
       <button type="button" aria-label={`What does this mean? ${text}`} onClick={() => setOpen((o) => !o)} onBlur={() => setOpen(false)}
-        onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} className="text-muted hover:text-brand">
-        <Info size={14} />
-      </button>
-      {open && <span role="tooltip" className="absolute left-0 top-full z-20 mt-1 w-60 rounded-lg border border-line bg-white p-2.5 text-xs font-normal leading-snug text-ink shadow-lg">{text}</span>}
+        onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} className="rounded text-slate-400 transition-colors hover:text-brand"><Info size={13} /></button>
+      {open && <span role="tooltip" className="fade-in absolute left-0 top-full z-30 mt-1.5 w-60 rounded-lg bg-slate-900 p-2.5 text-xs font-normal leading-snug text-white shadow-pop">{text}</span>}
     </span>
   )
 }
 
-export function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: ReactNode; tone?: 'pos' | 'neg' }) {
+/** Money that counts up to its value. Final frame is exactly the backend number. */
+export function Money({ value, digits = 0, className = '' }: { value: number; digits?: number; className?: string }) {
+  const v = useCountUp(value)
+  return <span className={`num ${className}`}>{usd(v, digits)}</span>
+}
+
+export function Stat({ label, value, amount, sub, tone, size = 'md' }: { label: string; value?: string; amount?: number; sub?: ReactNode; tone?: 'pos' | 'neg'; size?: 'md' | 'lg' }) {
+  const color = tone === 'pos' ? 'text-teal-700' : tone === 'neg' ? 'text-danger' : 'text-ink'
+  const cls = `${color} ${size === 'lg' ? 'text-4xl' : 'text-2xl sm:text-3xl'} font-semibold leading-tight`
   return (
-    <div>
-      <div className="text-sm text-muted">{label}</div>
-      <div className={`tabular text-2xl font-semibold sm:text-3xl ${tone === 'pos' ? 'text-teal-dark' : tone === 'neg' ? 'text-danger' : 'text-ink'}`}>{value}</div>
+    <div className="min-w-0">
+      <Eyebrow>{label}</Eyebrow>
+      <div className="mt-1">{amount !== undefined ? <Money value={amount} className={cls} /> : <span className={`num ${cls}`}>{value}</span>}</div>
       {sub && <div className="mt-1 text-xs text-muted">{sub}</div>}
     </div>
   )
 }
 
-export function Spinner({ label = 'Loading…' }: { label?: string }) {
-  return <div role="status" className="flex items-center gap-2 p-6 text-sm text-muted"><span className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />{label}</div>
+export const Skeleton = ({ className = '' }: { className?: string }) => <div aria-hidden className={`skeleton ${className}`} />
+export function SkeletonCard({ lines = 3, className = '' }: { lines?: number; className?: string }) {
+  return <Card className={className}><Skeleton className="h-3 w-24" /><Skeleton className="mt-3 h-8 w-40" />{Array.from({ length: lines }).map((_, i) => <Skeleton key={i} className={`mt-3 h-3 ${i % 2 ? 'w-2/3' : 'w-full'}`} />)}</Card>
 }
-export function ErrorBox({ message, onRetry }: { message: string; onRetry?: () => void }) {
+export function Spinner({ label = 'Loading…' }: { label?: string }) {
+  return <div role="status" aria-label={label} className="grid gap-4"><span className="sr-only">{label}</span><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><SkeletonCard lines={1} /><SkeletonCard lines={1} /><SkeletonCard lines={1} /><SkeletonCard lines={1} /></div><SkeletonCard lines={5} /></div>
+}
+
+export function ErrorBox({ message, onRetry, title = 'Something went wrong' }: { message: string; onRetry?: () => void; title?: string }) {
   return (
-    <div role="alert" className="rounded-xl border border-danger/30 bg-danger-soft p-4 text-sm text-danger">
-      {message}{onRetry && <button onClick={onRetry} className="ml-3 font-semibold underline">Retry</button>}
+    <div role="alert" className="flex items-start gap-3 rounded-xl border border-danger/25 bg-red-50 p-4 text-sm">
+      <AlertTriangle size={18} className="mt-0.5 shrink-0 text-danger" />
+      <div className="min-w-0 flex-1"><div className="font-semibold text-danger">{title}</div><p className="mt-0.5 text-slate-700">{message}</p></div>
+      {onRetry && <Button variant="secondary" size="sm" onClick={onRetry}><RefreshCw size={13} />Retry</Button>}
     </div>
   )
 }
+export function EmptyState({ icon, title, text, action }: { icon?: ReactNode; title: string; text: string; action?: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center rounded-xl border border-dashed border-slate-300 bg-white/60 px-6 py-10 text-center">
+      {icon && <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-brand">{icon}</span>}
+      <div className="font-semibold">{title}</div><p className="mt-1 max-w-sm text-sm text-muted">{text}</p>{action && <div className="mt-4">{action}</div>}
+    </div>
+  )
+}
+
 export function PageHeader({ title, sub, right, eyebrow }: { title: string; sub?: string; right?: ReactNode; eyebrow?: string }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        {eyebrow && <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-teal-dark">{eyebrow}</div>}
+    <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div className="min-w-0">
+        {eyebrow && <Eyebrow className="mb-1 !text-teal-700">{eyebrow}</Eyebrow>}
         <h1 className="text-2xl font-semibold text-ink sm:text-3xl">{title}</h1>
         {sub && <p className="mt-1 max-w-2xl text-sm text-muted">{sub}</p>}
       </div>
@@ -83,8 +113,9 @@ export function PageHeader({ title, sub, right, eyebrow }: { title: string; sub?
 
 export const Logo = ({ size = 32 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-    <rect width="32" height="32" rx="9" fill="#eaf1fd" />
-    <g fill="#3676d8"><circle cx="9" cy="9" r="2.6" /><circle cx="9" cy="23" r="2.6" /><circle cx="23" cy="9" r="2.6" /><circle cx="23" cy="23" r="2.6" /></g>
-    <path d="M9 9v14M23 9v14M9 16h14" stroke="#3676d8" strokeWidth="2.4" strokeLinecap="round" />
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#3676d8" /><stop offset="1" stopColor="#22a58a" /></linearGradient></defs>
+    <rect width="32" height="32" rx="9" fill="url(#lg)" />
+    <g fill="#fff"><circle cx="9.5" cy="9.5" r="2.4" /><circle cx="9.5" cy="22.5" r="2.4" /><circle cx="22.5" cy="9.5" r="2.4" /><circle cx="22.5" cy="22.5" r="2.4" /></g>
+    <path d="M9.5 9.5v13M22.5 9.5v13M9.5 16h13" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" />
   </svg>
 )

@@ -9,7 +9,7 @@ export default function Settings() {
   if (!profile) return null
   const set = (p: Partial<typeof profile>) => setProfile({ ...profile, ...p })
   const toggle = (g: Goal) => set({ goals: profile.goals.includes(g) ? profile.goals.filter((x) => x !== g) : [...profile.goals, g] })
-  const sel = 'rounded-xl border border-line bg-white px-3 py-2 text-sm'
+  const sel = 'h-9 rounded-lg border border-line bg-white px-3 text-sm outline-none transition-shadow hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25'
   return (
     <>
       <PageHeader title="Settings" sub="Edit your profile and AI privacy controls. Everything is stored in your browser." right={<DemoBadge />} />

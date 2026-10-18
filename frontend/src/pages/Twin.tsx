@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { RefreshCw, Sparkles } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Area, CartesianGrid, ComposedChart, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Lock, RefreshCw, Sparkles, TriangleAlert } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { api, type Dashboard, type Scenario, type SimResult } from '../api'
-import { Badge, Button, Card, DemoBadge, ErrorBox, HypoBadge, PageHeader, SectionHead, Spinner, Stat, Tip } from '../components/ui'
+import { Badge, Button, Card, DemoBadge, ErrorBox, Eyebrow, HypoBadge, IllusBadge, Money, PageHeader, SectionHead, Skeleton, SkeletonCard, Stat, Tip } from '../components/ui'
+import { AXIS, C, TipBox } from '../components/charts'
 import { useAsync } from '../lib/useAsync'
+import { friendlyError } from '../lib/errors'
 import { pct, usd } from '../lib/format'
 import { useStore, type TwinForm } from '../store'
 
-const BLUE = '#3676d8', TEAL = '#22a58a', AMBER = '#e8a03a'
+const SEG = [C.blue, C.teal, C.amber]
 const DEFAULT_MONTHLY = 300 // illustrative assumption: the demo dataset has no recorded contribution
 
 function initialForm(d: Dashboard): TwinForm {
@@ -45,29 +47,28 @@ function toScenario(f: TwinForm, monthly: string, initial: string, holdings: { n
   }
 }
 
-function NumField({ label, value, onChange, error, prefix, suffix, id, hint }: { label: string; value: string; onChange: (v: string) => void; error?: string; prefix?: string; suffix?: string; id: string; hint?: React.ReactNode }) {
+function NumField({ label, value, onChange, error, prefix, suffix, id, hint, compact }: { label: string; value: string; onChange: (v: string) => void; error?: string; prefix?: string; suffix?: string; id: string; hint?: ReactNode; compact?: boolean }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium">{label}</label>
-      <div className={`flex items-center rounded-xl border bg-white px-3 ${error ? 'border-danger' : 'border-line'} focus-within:ring-2 focus-within:ring-brand/40`}>
-        {prefix && <span className="mr-1 text-muted">{prefix}</span>}
-        <input id={id} inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={!!error} aria-describedby={error ? `${id}-err` : undefined} className="tabular w-full bg-transparent py-2.5 outline-none" />
-        {suffix && <span className="ml-1 text-muted">{suffix}</span>}
+      <label htmlFor={id} className="eyebrow mb-1 block !normal-case !tracking-normal !text-xs !font-medium !text-slate-700">{label}</label>
+      <div className={`flex items-center rounded-lg border bg-white px-2.5 transition-shadow ${error ? 'border-danger' : 'border-line hover:border-slate-300'} focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/25`}>
+        {prefix && <span className="mr-1 text-sm text-muted">{prefix}</span>}
+        <input id={id} inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={!!error} aria-describedby={error ? `${id}-err` : undefined} className={`num w-full min-w-0 bg-transparent text-sm outline-none ${compact ? 'h-8' : 'h-9'}`} />
+        {suffix && <span className="ml-1 whitespace-nowrap text-xs text-muted">{suffix}</span>}
       </div>
-      {error ? <p id={`${id}-err`} className="mt-1 text-xs text-danger">{error}</p> : hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+      {error ? <p id={`${id}-err`} className="mt-1 text-xs text-danger">{error}</p> : hint && <p className="mt-1 text-2xs leading-snug text-muted">{hint}</p>}
     </div>
   )
 }
 
 function AllocBar({ title, items, accent }: { title: string; items: { name: string; w: number }[]; accent?: boolean }) {
-  const colors = [BLUE, TEAL, AMBER]
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between text-sm font-medium">{title}{accent && <HypoBadge />}</div>
-      <div className="flex h-5 overflow-hidden rounded-full bg-line" role="img" aria-label={items.map((i) => `${i.name} ${i.w}%`).join(', ')}>
-        {items.map((it, i) => <div key={it.name} style={{ width: `${Math.max(it.w, 0)}%`, background: colors[i % 3] }} />)}
+      <div className="mb-2 flex items-center justify-between"><Eyebrow>{title}</Eyebrow>{accent && <HypoBadge />}</div>
+      <div className="flex h-3 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={items.map((i) => `${i.name} ${i.w}%`).join(', ')}>
+        {items.map((it, i) => <div key={it.name} style={{ width: `${Math.max(it.w, 0)}%`, background: SEG[i % 3] }} className={`transition-[width] duration-300 ${i ? 'border-l-2 border-white' : ''}`} />)}
       </div>
-      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">{items.map((it, i) => <li key={it.name} className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm" style={{ background: colors[i % 3] }} />{it.name} · {it.w}%</li>)}</ul>
+      <ul className="mt-2 space-y-0.5 text-xs">{items.map((it, i) => <li key={it.name} className="flex items-center justify-between gap-2"><span className="flex min-w-0 items-center gap-1.5 text-muted"><span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: SEG[i % 3] }} /><span className="truncate">{it.name}</span></span><span className="num font-semibold">{it.w}%</span></li>)}</ul>
     </div>
   )
 }
@@ -87,13 +88,28 @@ function Quiz() {
         {q.options.map((o, k) => {
           const done = pick !== null; const right = k === q.answer
           return <button key={o} role="radio" aria-checked={pick === k} disabled={done} onClick={() => setPick(k)}
-            className={`block w-full rounded-xl border p-3 text-left text-sm ${done && right ? 'border-teal bg-teal-soft' : done && pick === k ? 'border-danger bg-danger-soft' : 'border-line bg-white hover:border-brand/50'}`}>{o}</button>
+            className={`block w-full rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${done && right ? 'border-teal-500 bg-teal-50' : done && pick === k ? 'border-danger bg-red-50' : 'border-line bg-white hover:border-blue-300 hover:bg-blue-50/50'}`}>{o}</button>
         })}
       </div>
-      {pick !== null && <div className="mt-3 rounded-xl bg-brand-soft/60 p-3 text-sm" role="status"><b>{pick === q.answer ? 'Correct. ' : 'Not quite. '}</b>{q.why}
-        {i < QUIZ.length - 1 && <button onClick={() => { setI(i + 1); setPick(null) }} className="ml-2 font-semibold text-brand-dark underline">Next question</button>}</div>}
+      {pick !== null && <div className="fade-in mt-3 rounded-lg bg-blue-50 p-3 text-sm" role="status"><b>{pick === q.answer ? 'Correct. ' : 'Not quite. '}</b>{q.why}
+        {i < QUIZ.length - 1 && <button onClick={() => { setI(i + 1); setPick(null) }} className="ml-2 font-semibold text-brand underline">Next question</button>}</div>}
     </Card>
   )
+}
+
+/** Splits `rest` among the other holdings in proportion to their current weights, keeping the total at 100. */
+function linkedWeights(f: TwinForm, i: number, v: number): TwinForm['holdings'] {
+  const others = f.holdings.map((h, j) => ({ j, w: num(h.weight) || 0 })).filter((o) => o.j !== i)
+  const rest = Math.round((100 - v) * 100) / 100
+  const sum = others.reduce((a, o) => a + o.w, 0)
+  const next = f.holdings.map((h) => ({ ...h }))
+  next[i].weight = String(v)
+  let used = 0
+  others.forEach((o, k) => {
+    const share = k === others.length - 1 ? Math.round((rest - used) * 100) / 100 : Math.round((sum > 0 ? (o.w / sum) * rest : rest / others.length) * 100) / 100
+    used += share; next[o.j].weight = String(share)
+  })
+  return next
 }
 
 export default function Twin() {
@@ -131,8 +147,10 @@ export default function Twin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, valid, dash])
 
-  if (loading || (!form && !dashErr)) return <Spinner label="Loading your starting portfolio…" />
-  if (dashErr || !dash || !form || !v) return <ErrorBox message={`Couldn’t load the starting portfolio (${dashErr}).`} onRetry={retry} />
+  if (loading || (!form && !dashErr)) return (
+    <><PageHeader title="Financial Twin" eyebrow="Simulation lab" /><div className="grid gap-4 lg:grid-cols-[340px_1fr]"><SkeletonCard lines={8} /><div className="space-y-4"><SkeletonCard lines={2} /><Card><Skeleton className="h-72 w-full" /></Card></div></div></>
+  )
+  if (dashErr || !dash || !form || !v) return <ErrorBox title="Starting portfolio unavailable" message={friendlyError(dashErr, 'the starting portfolio')} onRetry={retry} />
 
   const set = (patch: Partial<TwinForm>) => setForm({ ...form, ...patch })
   const setHolding = (i: number, patch: Partial<TwinForm['holdings'][0]>) => set({ holdings: form.holdings.map((h, j) => (j === i ? { ...h, ...patch } : h)) })
@@ -145,144 +163,181 @@ export default function Twin() {
   const reset = () => setForm(initialForm(dash))
 
   const sim = res?.sim, bs = res?.baseSim
-  const lineData = sim ? sim.hypothetical.yearly_values.map((y, i) => ({ year: i, hypothetical: y, baseline: sim.baseline?.yearly_values[i] })) : []
+  const N = sim ? sim.hypothetical.yearly_values.length - 1 : 0
+  const lineData = sim ? sim.hypothetical.yearly_values.map((y, i) => {
+    const b = sim.baseline?.yearly_values[i] ?? y
+    return { year: i, hypo: y, base: b, lo: Math.min(y, b), gap: Math.abs(y - b), up: y >= b }
+  }) : []
   const riskData = sim ? sim.risk_scenarios.base.yearly_values.map((_, i) => ({ year: i, downside: sim.risk_scenarios.downside.yearly_values[i], base: sim.risk_scenarios.base.yearly_values[i], upside: sim.risk_scenarios.upside.yearly_values[i] })) : []
   const diff = sim?.difference_at_end ?? 0
+  const gapColor = diff >= 0 ? C.teal : C.amber
   const explain = () => {
     setPendingAsk({ message: 'Explain this Financial Twin scenario to me in plain language. Use only the numbers provided.', scenario: true })
     nav('/companion')
   }
+  const endLabel = (color: string, text: string, dy = 0) => (p: { x?: number | string; y?: number | string; index?: number }) =>
+    p.index === N ? <text x={Number(p.x ?? 0) + 8} y={Number(p.y ?? 0) + 4 + dy} fontSize={11} fontWeight={600} fill={color}>{text}</text> : <g />
 
   return (
     <>
-      <PageHeader title="Financial Twin" eyebrow="Simulation lab" sub="Explore how different investing choices might affect a hypothetical future. Change an input and every number below is recalculated by the backend."
-        right={<div className="flex gap-2"><Button variant="secondary" onClick={reset}><RefreshCw size={15} />Reset</Button><Button onClick={() => valid && run(form)} disabled={!valid || busy}>{busy ? 'Running…' : 'Run Simulation'}</Button></div>} />
+      <PageHeader title="Financial Twin" eyebrow="Simulation lab" sub="Explore how different investing choices might affect a hypothetical future. Change an input and every number is recalculated by the backend." />
 
-      <Card className="mb-5">
-        <SectionHead title="Starting position" sub="Your current investment baseline" right={<DemoBadge />} />
-        <div className="grid gap-6 md:grid-cols-2">
-          <div>
-            <Stat label="Starting investment" value={usd(dash.portfolio.total)} sub="Brokerage balance from the Dashboard (demo)" />
-            <div className="mt-4 max-w-xs">
-              <NumField id="baseMonthly" label="Current monthly contribution" prefix="$" value={form.baselineMonthly} onChange={(x) => set({ baselineMonthly: x })} error={v.errors.baselineMonthly}
-                hint={<><Badge>Illustrative assumption</Badge> The demo data has no recorded contribution.</>} />
+      <div className="grid items-start gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+        {/* ───────── control panel ───────── */}
+        <aside className="space-y-4 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pr-1" aria-label="Simulation controls">
+          <Card>
+            <div className="mb-3 flex items-center justify-between"><Eyebrow>Starting position</Eyebrow><DemoBadge /></div>
+            <Stat label="Starting investment" amount={dash.portfolio.total} sub="Brokerage balance from the Dashboard (demo)" />
+            <div className="mt-3"><NumField id="baseMonthly" label="Current monthly contribution" prefix="$" value={form.baselineMonthly} onChange={(x) => set({ baselineMonthly: x })} error={v.errors.baselineMonthly}
+              hint={<><Badge tone="illus">Illustrative assumption</Badge> <span className="mt-1 inline-block">The demo data has no recorded contribution.</span></>} /></div>
+            <div className="mt-4 border-t border-line pt-4"><AllocBar title="Current ETF allocation" items={baseAlloc} /></div>
+          </Card>
+
+          <Card>
+            <div className="mb-3 flex items-center justify-between"><Eyebrow>Controls</Eyebrow><HypoBadge>Hypothetical plan</HypoBadge></div>
+            <div className="grid grid-cols-2 gap-3">
+              <NumField id="initial" label="Initial investment" prefix="$" value={form.initial} onChange={(x) => set({ initial: x })} error={v.errors.initial} />
+              <NumField id="years" label="Duration" suffix="years" value={form.years} onChange={(x) => set({ years: x })} error={v.errors.years} />
+              <NumField id="monthly" label="Monthly contribution" prefix="$" value={form.monthly} onChange={(x) => set({ monthly: x })} error={v.errors.monthly} hint="Added at month end" />
+              <NumField id="gross" label="Gross annual return" suffix="%" value={form.gross} onChange={(x) => set({ gross: x })} error={v.errors.gross} hint="Your assumption, not a prediction" />
             </div>
-          </div>
-          <AllocBar title="Current ETF allocation" items={baseAlloc} />
-        </div>
-      </Card>
-
-      <Card className="mb-5">
-        <SectionHead title="Simulation controls" sub="Explore a hypothetical plan" right={<HypoBadge>Hypothetical plan</HypoBadge>} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <NumField id="initial" label="Initial investment" prefix="$" value={form.initial} onChange={(x) => set({ initial: x })} error={v.errors.initial} />
-          <NumField id="years" label="Investment duration" suffix="years" value={form.years} onChange={(x) => set({ years: x })} error={v.errors.years} />
-          <NumField id="monthly" label="Monthly contribution" prefix="$" value={form.monthly} onChange={(x) => set({ monthly: x })} error={v.errors.monthly} hint="Added at the end of each month" />
-          <NumField id="gross" label="Assumed gross annual return" suffix="%" value={form.gross} onChange={(x) => set({ gross: x })} error={v.errors.gross} hint="An assumption you choose, not a prediction" />
-        </div>
-        <fieldset className="mt-6">
-          <legend className="mb-1 text-sm font-semibold"><Tip text="How your money is split between funds. The percentages must add up to 100%.">ETF allocation</Tip></legend>
-          <div className="space-y-4">
-            {form.holdings.map((h, i) => (
-              <div key={h.name} className="grid items-center gap-3 rounded-xl border border-line p-3 sm:grid-cols-[1fr_auto]">
-                <div>
-                  <div className="mb-1 flex items-center justify-between text-sm"><span className="font-medium">{h.name}</span><span className="tabular font-semibold text-brand-dark">{num(h.weight) || 0}%</span></div>
-                  <input type="range" min={0} max={100} step={1} value={num(h.weight) || 0} aria-label={`${h.name} weight`} onChange={(e) => setHolding(i, { weight: e.target.value })} className="w-full" />
-                  {v.errors[`w${i}`] && <p className="text-xs text-danger">{v.errors[`w${i}`]}</p>}
-                </div>
-                <div className="w-full sm:w-40"><NumField id={`er${i}`} label="Expense ratio" suffix="%/yr" value={h.er} onChange={(x) => setHolding(i, { er: x })} error={v.errors[`er${i}`]} /></div>
+            <fieldset className="mt-5 border-t border-line pt-4">
+              <legend className="mb-2 flex w-full items-center justify-between text-xs font-medium text-slate-700"><Tip text="How your money is split between funds. The percentages always add up to 100%.">ETF allocation</Tip>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold ${v.errors.total ? 'bg-red-50 text-danger' : 'bg-teal-50 text-teal-800'}`}>{v.errors.total ? <TriangleAlert size={11} /> : <Lock size={11} />}{v.total}% / 100%</span></legend>
+              {/* the meter: segments always sum to the 100% track */}
+              <div className="relative mb-3 h-2.5 overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200" aria-hidden>
+                <div className="flex h-full" style={{ width: `${Math.min(100, v.total)}%` }}>{hypoAlloc.map((a, i) => <div key={a.name} style={{ width: `${v.total > 0 ? (a.w / v.total) * 100 : 0}%`, background: SEG[i % 3] }} className="transition-[width] duration-200" />)}</div>
+                {v.total > 100 && <div className="absolute inset-0 bg-red-600/30" />}
               </div>
-            ))}
-          </div>
-          <div className={`mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm ${v.errors.total ? 'bg-danger-soft text-danger' : 'bg-teal-soft text-teal-dark'}`} role={v.errors.total ? 'alert' : 'status'}>
-            <span>{v.errors.total ?? `Allocation totals ${v.total}% ✓`}</span>
-            {v.errors.total && !form.holdings.slice(0, -1).some((_, i) => v.errors[`w${i}`]) && <button type="button" onClick={balance} className="font-semibold underline">Set last fund to the remaining %</button>}
-          </div>
-        </fieldset>
-      </Card>
+              <div className="space-y-3">
+                {form.holdings.map((h, i) => (
+                  <div key={h.name} className="rounded-lg border border-line bg-slate-25 p-2.5">
+                    <div className="mb-1 flex items-center justify-between text-xs"><span className="flex min-w-0 items-center gap-1.5 font-medium"><span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: SEG[i % 3] }} /><span className="truncate">{h.name}</span></span><span className="num text-sm font-semibold text-blue-700">{num(h.weight) || 0}%</span></div>
+                    <input type="range" min={0} max={100} step={1} value={Math.min(100, Math.max(0, num(h.weight) || 0))} aria-label={`${h.name} weight`}
+                      onChange={(e) => set({ holdings: linkedWeights(form, i, Number(e.target.value)) })} className="w-full" />
+                    <div className="mt-1.5 grid grid-cols-2 gap-2">
+                      <NumField compact id={`w${i}`} label="Weight" suffix="%" value={h.weight} onChange={(x) => setHolding(i, { weight: x })} error={v.errors[`w${i}`]} />
+                      <NumField compact id={`er${i}`} label="Expense ratio" suffix="%/yr" value={h.er} onChange={(x) => setHolding(i, { er: x })} error={v.errors[`er${i}`]} />
+                    </div>
+                  </div>))}
+              </div>
+              <p className="mt-2 text-2xs text-muted">Sliders move the other funds to keep the total at 100%. Typing a weight directly can break the total, and the plan won’t update until it’s fixed.</p>
+              {v.errors.total && <div role="alert" className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-red-50 px-2.5 py-2 text-xs text-danger"><span>{v.errors.total}</span>
+                {!form.holdings.slice(0, -1).some((_, i) => v.errors[`w${i}`]) && <button type="button" onClick={balance} className="font-semibold underline">Set last fund to the remaining %</button>}</div>}
+              {!v.errors.total && <div role="status" className="mt-2 text-xs text-teal-800">Allocation totals {v.total}% ✓</div>}
+            </fieldset>
+            <div className="mt-4 flex gap-2"><Button onClick={() => valid && run(form)} disabled={!valid || busy} className="flex-1">{busy ? 'Running…' : 'Run Simulation'}</Button><Button variant="secondary" onClick={reset} aria-label="Reset to starting values"><RefreshCw size={14} />Reset</Button></div>
+          </Card>
+        </aside>
 
-      {!valid && <div className="mb-5"><ErrorBox message="Fix the highlighted inputs to update the projection. Showing the last valid results below." /></div>}
-      {simErr && <div className="mb-5"><ErrorBox message={`Simulation failed: ${simErr}`} onRetry={() => run(form)} /></div>}
-      {!sim ? <Spinner label="Running simulation…" /> : (
-        <div className={busy ? 'opacity-70 transition-opacity' : 'transition-opacity'}>
-          <Card className="mb-5">
-            <SectionHead title="Investment projection" sub={`Illustrative growth over ${res!.scenario.years} years`} right={<HypoBadge>Illustrative estimate</HypoBadge>} />
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Stat label="Illustrative ending value" value={usd(sim.hypothetical.ending_value)} sub="Hypothetical plan, including the starting balance" />
-              <Stat label="Total contributed" value={usd(sim.hypothetical.total_contributions)} sub="Initial investment + all monthly contributions" />
-              <Stat label="Modeled growth" value={usd(sim.hypothetical.modeled_growth)} sub="Above total contributed, before taxes and inflation" />
+        {/* ───────── results ───────── */}
+        <div className="min-w-0 space-y-4">
+          {!valid && <ErrorBox title="Inputs need attention" message="Fix the highlighted inputs to update the projection. Showing the last valid results below." />}
+          {simErr && <ErrorBox title="Simulation failed" message={friendlyError(simErr, 'the simulation')} onRetry={() => run(form)} />}
+          {!sim ? (!simErr && <div role="status" aria-label="Running simulation…" className="space-y-4"><SkeletonCard lines={1} /><Card><Skeleton className="h-72 w-full" /></Card></div>) : (<>
+            <div className="sticky top-12 z-20 -mx-1 rounded-xl border border-line bg-white/95 px-4 py-3 shadow-md backdrop-blur" aria-label="Summary" role="region">
+              <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+                  <div><Eyebrow>Hypothetical ending value</Eyebrow><div className="flex items-center gap-2"><Money value={sim.hypothetical.ending_value} className="text-2xl font-semibold text-blue-700" />{busy && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" aria-label="Updating" />}</div></div>
+                  <div><Eyebrow>vs current plan</Eyebrow><div className={`num text-lg font-semibold ${diff >= 0 ? 'text-teal-700' : 'text-danger'}`} data-testid="summary-diff">{diff >= 0 ? '+' : '−'}{usd(Math.abs(diff))}</div></div>
+                  <div className="hidden sm:block"><Eyebrow>Weighted fee</Eyebrow><div className="num text-lg font-semibold">{pct(sim.weighted_expense_ratio_pct)}</div></div>
+                </div>
+                <div className="flex items-center gap-2"><HypoBadge>Illustrative estimate</HypoBadge><Button size="sm" onClick={explain} className="whitespace-nowrap"><Sparkles size={14} />Explain This Scenario</Button></div>
+              </div>
             </div>
-            <div className="mt-5 h-72" role="img" aria-label="Line chart of baseline versus hypothetical portfolio value by year">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={lineData} margin={{ left: 4, right: 12, top: 8 }}>
-                  <CartesianGrid stroke="#e3eaf5" vertical={false} />
-                  <XAxis dataKey="year" tickLine={false} label={{ value: 'Years', position: 'insideBottomRight', offset: -4, fontSize: 12 }} />
-                  <YAxis tickFormatter={(x) => `$${Math.round(x / 1000)}k`} tickLine={false} axisLine={false} width={52} />
-                  <Tooltip formatter={(x) => usd(Number(x))} labelFormatter={(y) => `Year ${y}`} />
-                  <Legend verticalAlign="top" align="left" />
-                  <Line name="Hypothetical plan" dataKey="hypothetical" stroke={BLUE} strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
-                  <Line name="Current plan (baseline)" dataKey="baseline" stroke={TEAL} strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
-                </LineChart>
-              </ResponsiveContainer>
+
+            <div className={`space-y-4 transition-opacity ${busy ? 'opacity-75' : ''}`}>
+              <Card>
+                <SectionHead title="Investment projection" sub={`Illustrative growth over ${res!.scenario.years} years`} right={<HypoBadge>Illustrative estimate</HypoBadge>} />
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Stat label="Illustrative ending value" amount={sim.hypothetical.ending_value} sub="Hypothetical plan, including the starting balance" />
+                  <Stat label="Total contributed" amount={sim.hypothetical.total_contributions} sub="Initial investment + all monthly contributions" />
+                  <Stat label="Modeled growth" amount={sim.hypothetical.modeled_growth} sub="Above total contributed, before taxes and inflation" />
+                </div>
+                <div className="mt-4 h-72" role="img" aria-label="Line chart of baseline versus hypothetical portfolio value by year, with the gap shaded">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={lineData} margin={{ left: 0, right: 92, top: 10, bottom: 4 }}>
+                      <CartesianGrid stroke={C.grid} vertical={false} />
+                      <XAxis dataKey="year" tickLine={false} axisLine={{ stroke: C.grid }} tick={AXIS} minTickGap={14} tickFormatter={(y) => `Y${y}`} />
+                      <YAxis tickFormatter={(x) => `$${Math.round(x / 1000)}k`} tickLine={false} axisLine={false} width={48} tick={AXIS} />
+                      <Tooltip cursor={{ stroke: '#141c30', strokeDasharray: '3 3', strokeOpacity: 0.5 }} content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null
+                        const p = payload[0].payload as (typeof lineData)[number]
+                        return <TipBox title={`Year ${p.year}`} rows={[{ label: 'Hypothetical', value: usd(p.hypo), color: C.blue, strong: true }, { label: 'Current plan', value: usd(p.base), color: C.teal }]} foot={<>Gap <b className="num text-white">{p.up ? '+' : '−'}{usd(p.gap)}</b></>} />
+                      }} />
+                      <Area dataKey="lo" stackId="g" stroke="none" fill="transparent" isAnimationActive={false} activeDot={false} legendType="none" />
+                      <Area dataKey="gap" stackId="g" stroke="none" fill={gapColor} fillOpacity={0.16} isAnimationActive={false} activeDot={false} legendType="none" />
+                      <Line dataKey="base" name="Current plan" stroke={C.teal} strokeWidth={2.25} dot={false} activeDot={{ r: 4 }} animationDuration={600} label={endLabel(C.tealDeep, 'Current plan', 10)} />
+                      <Line dataKey="hypo" name="Hypothetical" stroke={C.blue} strokeWidth={2.75} dot={false} activeDot={{ r: 5 }} animationDuration={600} label={endLabel(C.blueDeep, 'Hypothetical', -6)} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-sm" data-testid="diff">Difference at year {res!.scenario.years}: <b className={diff >= 0 ? 'text-teal-700' : 'text-danger'}>{diff >= 0 ? '+' : '−'}{usd(Math.abs(diff))}</b> versus the current plan ({usd(sim.baseline?.ending_value ?? 0)}). The shaded band is that gap. The baseline uses your current allocation and the same duration and return.</p>
+              </Card>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <SectionHead title="Portfolio comparison" sub="Current versus hypothetical allocation" />
+                  <div className="space-y-5"><AllocBar title="Current allocation" items={baseAlloc} /><AllocBar title="Hypothetical allocation" items={hypoAlloc} accent /></div>
+                </Card>
+                <Card>
+                  <SectionHead title="ETF fee impact" sub="Same inputs, with and without fund fees" right={<IllusBadge>Fee comparison</IllusBadge>} />
+                  <div className="grid gap-3">
+                    <div className="rounded-lg border border-line p-3"><div className="text-xs text-muted"><Tip text="Weighted expense ratio = each fund's fee × its share of the portfolio, added up.">Current plan · weighted fee {pct(sim.baseline_expense_ratio_pct ?? 0)}</Tip></div>
+                      <Money value={bs?.fee_impact.cost_of_fees ?? 0} className="text-xl font-semibold" /><p className="text-2xs text-muted">Modeled cost of fees over {res!.scenario.years} years</p></div>
+                    <div className="rounded-lg border border-teal-200 bg-teal-50 p-3"><div className="text-xs text-teal-800">Hypothetical plan · weighted fee {pct(sim.weighted_expense_ratio_pct)}</div>
+                      <Money value={sim.fee_impact.cost_of_fees} className="text-xl font-semibold" /><p className="text-2xs text-muted">Modeled cost of fees over {res!.scenario.years} years</p></div>
+                  </div>
+                  <p className="mt-3 text-xs">Fee cost difference: <b>{usd(Math.abs(sim.fee_impact.cost_of_fees - (bs?.fee_impact.cost_of_fees ?? 0)))}</b> {sim.fee_impact.cost_of_fees <= (bs?.fee_impact.cost_of_fees ?? 0) ? 'less' : 'more'} in fees for the hypothetical plan. Contribution and balance differences also affect this figure.</p>
+                </Card>
+              </div>
+
+              <Card>
+                <SectionHead title="Risk scenarios" sub="Three assumptions, not predictions" right={<IllusBadge>Illustrative scenarios</IllusBadge>} />
+                <div className="grid gap-3 md:grid-cols-3">
+                  {(['downside', 'base', 'upside'] as const).map((k) => (
+                    <div key={k} className={`rounded-lg border p-3 ${k === 'base' ? 'border-blue-200 bg-blue-50' : 'border-line'}`}>
+                      <div className="flex items-center gap-2 text-xs font-semibold capitalize"><span className="h-2 w-2 rounded-sm" style={{ background: k === 'downside' ? C.amber : k === 'base' ? C.blue : C.teal }} />{k}</div>
+                      <Money value={sim.risk_scenarios[k].ending_value} className="text-xl font-semibold" />
+                      <p className="text-2xs text-muted">{pct(sim.risk_scenarios[k].gross_return_pct, 0)} gross return{k === 'base' ? ' · your chosen assumption' : ''}</p>
+                    </div>))}
+                </div>
+                <div className="mt-4 h-56" role="img" aria-label="Line chart of downside, base and upside scenarios">
+                  <ResponsiveContainer width="100%" height="100%"><LineChart data={riskData} margin={{ left: 0, right: 76, top: 8 }}>
+                    <CartesianGrid stroke={C.grid} vertical={false} /><XAxis dataKey="year" tickLine={false} axisLine={{ stroke: C.grid }} tick={AXIS} minTickGap={14} tickFormatter={(y) => `Y${y}`} />
+                    <YAxis tickFormatter={(x) => `$${Math.round(x / 1000)}k`} tickLine={false} axisLine={false} width={48} tick={AXIS} />
+                    <Tooltip cursor={{ stroke: '#141c30', strokeDasharray: '3 3', strokeOpacity: 0.5 }} content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null; const p = payload[0].payload
+                      return <TipBox title={`Year ${p.year}`} rows={[{ label: 'Upside', value: usd(p.upside), color: C.teal }, { label: 'Base', value: usd(p.base), color: C.blue, strong: true }, { label: 'Downside', value: usd(p.downside), color: C.amber }]} />
+                    }} />
+                    <ReferenceLine y={0} stroke={C.grid} />
+                    <Line dataKey="upside" stroke={C.teal} strokeWidth={2} dot={false} animationDuration={600} label={endLabel(C.tealDeep, 'Upside')} />
+                    <Line dataKey="base" stroke={C.blue} strokeWidth={2.5} dot={false} animationDuration={600} label={endLabel(C.blueDeep, 'Base')} />
+                    <Line dataKey="downside" stroke={C.amber} strokeWidth={2} dot={false} animationDuration={600} label={endLabel('#8a5a0e', 'Downside')} />
+                  </LineChart></ResponsiveContainer>
+                </div>
+                <p className="mt-2 text-xs text-muted">Illustrative scenarios, not forecasts or probability ranges. The downside is not a floor: returns can be negative and capital can be lost.</p>
+              </Card>
+
+              <Card tone="brand">
+                <SectionHead title="Calculation assumptions" sub="Everything is computed by deterministic backend code" />
+                <ul className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
+                  <li><b>Monthly rate:</b> {sim.assumptions.monthly_rate}</li><li><b>Contributions:</b> {sim.assumptions.contribution_timing}</li>
+                  <li><b>Excluded:</b> {sim.assumptions.excluded.join(', ')}</li><li><b>Rounding:</b> cents, at output only</li>
+                </ul>
+                <p className="mt-2 text-xs text-muted">{sim.assumptions.disclaimer} Educational illustration, not individualized investment advice.</p>
+              </Card>
+
+              <Card>
+                <SectionHead title="AI explanation" sub="Plain-language summary of these exact results, via Backboard" right={<Badge tone="hypo">Opens AI Companion</Badge>} />
+                <p className="mb-3 text-sm text-muted">The assistant receives the calculated numbers from this page (inputs, ending values, fees, risk scenarios). It is instructed to explain only those figures and never to calculate its own.</p>
+                <Button onClick={explain}><Sparkles size={15} />Explain This Scenario</Button>
+              </Card>
             </div>
-            <p className="mt-2 text-sm" data-testid="diff">Difference at year {res!.scenario.years}: <b className={diff >= 0 ? 'text-teal-dark' : 'text-danger'}>{diff >= 0 ? '+' : '−'}{usd(Math.abs(diff))}</b> versus the current plan ({usd(sim.baseline?.ending_value ?? 0)}). The baseline uses your current allocation and the same duration and return.</p>
-          </Card>
-
-          <Card className="mb-5">
-            <SectionHead title="Portfolio comparison" sub="Current versus hypothetical allocation" />
-            <div className="grid gap-6 md:grid-cols-2"><AllocBar title="Current allocation" items={baseAlloc} /><AllocBar title="Hypothetical allocation" items={hypoAlloc} accent /></div>
-          </Card>
-
-          <Card className="mb-5">
-            <SectionHead title="ETF fee impact" sub="Same inputs, with and without fund fees" right={<Badge>Fee comparison</Badge>} />
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-xl border border-line p-4"><div className="text-sm text-muted"><Tip text="Weighted expense ratio = each fund's fee × its share of the portfolio, added up.">Current plan · weighted fee {pct(sim.baseline_expense_ratio_pct ?? 0)}</Tip></div>
-                <div className="tabular mt-1 text-2xl font-semibold">{usd(bs?.fee_impact.cost_of_fees ?? 0)}</div><p className="text-xs text-muted">Modeled cost of fees over {res!.scenario.years} years</p></div>
-              <div className="rounded-xl border border-teal/30 bg-teal-soft p-4"><div className="text-sm text-teal-dark">Hypothetical plan · weighted fee {pct(sim.weighted_expense_ratio_pct)}</div>
-                <div className="tabular mt-1 text-2xl font-semibold">{usd(sim.fee_impact.cost_of_fees)}</div><p className="text-xs text-muted">Modeled cost of fees over {res!.scenario.years} years</p></div>
-            </div>
-            <p className="mt-3 text-sm">Fee cost difference: <b>{usd(Math.abs(sim.fee_impact.cost_of_fees - (bs?.fee_impact.cost_of_fees ?? 0)))}</b> {sim.fee_impact.cost_of_fees <= (bs?.fee_impact.cost_of_fees ?? 0) ? 'less' : 'more'} in fees for the hypothetical plan. (Contribution and balance differences also affect this figure.)</p>
-          </Card>
-
-          <Card className="mb-5">
-            <SectionHead title="Risk scenarios" sub="Three assumptions, not predictions" right={<Badge>Illustrative scenarios</Badge>} />
-            <div className="grid gap-4 md:grid-cols-3">
-              {(['downside', 'base', 'upside'] as const).map((k) => (
-                <div key={k} className={`rounded-xl border p-4 ${k === 'base' ? 'border-teal/30 bg-teal-soft' : 'border-line'}`}>
-                  <div className="text-sm font-medium capitalize">{k}</div>
-                  <div className="tabular mt-1 text-2xl font-semibold">{usd(sim.risk_scenarios[k].ending_value)}</div>
-                  <p className="text-xs text-muted">{pct(sim.risk_scenarios[k].gross_return_pct, 0)} gross return{k === 'base' ? ' · your chosen assumption' : ''}</p>
-                </div>))}
-            </div>
-            <div className="mt-4 h-56" role="img" aria-label="Line chart of downside, base and upside scenarios">
-              <ResponsiveContainer width="100%" height="100%"><LineChart data={riskData} margin={{ left: 4, right: 12 }}>
-                <CartesianGrid stroke="#e3eaf5" vertical={false} /><XAxis dataKey="year" tickLine={false} />
-                <YAxis tickFormatter={(x) => `$${Math.round(x / 1000)}k`} tickLine={false} axisLine={false} width={52} />
-                <Tooltip formatter={(x) => usd(Number(x))} labelFormatter={(y) => `Year ${y}`} /><Legend />
-                <Line dataKey="downside" stroke={AMBER} strokeWidth={2} dot={false} isAnimationActive={false} />
-                <Line dataKey="base" stroke={BLUE} strokeWidth={2.5} dot={false} isAnimationActive={false} />
-                <Line dataKey="upside" stroke={TEAL} strokeWidth={2} dot={false} isAnimationActive={false} /></LineChart></ResponsiveContainer>
-            </div>
-            <p className="mt-2 text-xs text-muted">Illustrative scenarios, not forecasts or probability ranges. The downside is not a floor: returns can be negative and capital can be lost.</p>
-          </Card>
-
-          <Card className="mb-5" tone="brand">
-            <SectionHead title="Calculation assumptions" sub="Everything is computed by deterministic backend code" />
-            <ul className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
-              <li><b>Monthly rate:</b> {sim.assumptions.monthly_rate}</li><li><b>Contributions:</b> {sim.assumptions.contribution_timing}</li>
-              <li><b>Excluded:</b> {sim.assumptions.excluded.join(', ')}</li><li><b>Rounding:</b> cents, at output only</li>
-            </ul>
-            <p className="mt-2 text-xs text-muted">{sim.assumptions.disclaimer} Educational illustration, not individualized investment advice.</p>
-          </Card>
-
-          <Card className="mb-5">
-            <SectionHead title="AI explanation" sub="Plain-language summary of these exact results, via Backboard" right={<Badge>Opens AI Companion</Badge>} />
-            <p className="mb-4 text-sm text-muted">The assistant receives the calculated numbers from this page (inputs, ending values, fees, risk scenarios). It is instructed to explain only those figures and never to calculate its own.</p>
-            <Button onClick={explain}><Sparkles size={16} />Explain This Scenario</Button>
-          </Card>
+          </>)}
+          <Quiz />
         </div>
-      )}
-      <Quiz />
+      </div>
     </>
   )
 }
