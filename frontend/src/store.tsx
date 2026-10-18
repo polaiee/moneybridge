@@ -4,6 +4,10 @@ import type { Scenario, SimResult } from './api'
 
 export interface Profile { name: string; stage: Stage; level: Level; goals: Goal[]; dataSetup: 'demo' }
 export interface ChatMsg { role: 'user' | 'assistant'; text: string; contextUsed?: string[]; error?: boolean }
+export interface TwinForm {
+  initial: string; monthly: string; years: string; gross: string; baselineMonthly: string
+  holdings: { name: string; weight: string; er: string }[]
+}
 export interface TwinContext { scenario: Scenario; baseline: Scenario; results: SimResult }
 export interface CompareContext { a: string; b: string; label: string }
 /** A request handed to the AI Companion from another page. */
@@ -24,6 +28,8 @@ interface Store {
   setTwinContext: (c: TwinContext | null) => void
   compareContext: CompareContext | null
   setCompareContext: (c: CompareContext | null) => void
+  twinForm: TwinForm | null
+  setTwinForm: (f: TwinForm | null) => void
   pendingAsk: PendingAsk | null
   setPendingAsk: (p: PendingAsk | null) => void
   newConversation: () => void
@@ -55,6 +61,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [shareProfile, setShareProfile] = useShare()
   const [twinContext, setTwinContext] = useState<TwinContext | null>(null)
   const [compareContext, setCompareContext] = useState<CompareContext | null>(null)
+  const [twinForm, setTwinForm] = useState<TwinForm | null>(null)
   const [pendingAsk, setPendingAsk] = useState<PendingAsk | null>(null)
 
   // setChat accepts an updater; keep a ref-free implementation via functional state on the raw value.
@@ -66,7 +73,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Store>(() => ({
     profile, setProfile, chat: chatLive, setChat, threadId, setThreadId, memoryEnabled, setMemoryEnabled,
     shareProfile, setShareProfile, twinContext, setTwinContext, compareContext, setCompareContext,
-    pendingAsk, setPendingAsk, newConversation,
-  }), [profile, setProfile, chatLive, setChat, threadId, setThreadId, memoryEnabled, setMemoryEnabled, shareProfile, setShareProfile, twinContext, compareContext, pendingAsk, newConversation])
+    twinForm, setTwinForm, pendingAsk, setPendingAsk, newConversation,
+  }), [twinForm, profile, setProfile, chatLive, setChat, threadId, setThreadId, memoryEnabled, setMemoryEnabled, shareProfile, setShareProfile, twinContext, compareContext, pendingAsk, newConversation])
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
