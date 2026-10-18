@@ -1,13 +1,14 @@
 from dotenv import load_dotenv
 from pathlib import Path
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from . import demo_data, marketplace, simulation, backboard
+from pydantic import BaseModel, Field
+from . import demo_data, marketplace, simulation, backboard, ai_safety, audit
 
 app = FastAPI(title="MoneyBridge API")
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], allow_methods=["*"], allow_headers=["*"])
+DEMO_USER = "demo-user"
 STATE = {"assistant_id": None}  # demo-only single isolated identity (Alex Morgan / demo user)
 
 @app.get("/api/health")
@@ -37,24 +38,37 @@ def compare(req: CompareReq):
     except ValueError as e: raise HTTPException(422, str(e))
 
 class ChatReq(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=4000)
     thread_id: str | None = None
     memory_enabled: bool = False
     scenario_results: dict | None = None
     compare: CompareReq | None = None
 @app.post("/api/chat")
 async def chat(req: ChatReq):
+    # Guardian: refuse injection attempts (in the message or the client-supplied context).
+    reasons = ai_safety.check_prompt_injection(req.message) + ai_safety.scan_context_for_injection(req.scenario_results)
+    if reasons:
+        audit.record(DEMO_USER, "ai_request_blocked", ", ".join(sorted(set(reasons))))
+        return {"reply": ai_safety.BLOCKED_REPLY, "thread_id": req.thread_id, "assistant_id": STATE["assistant_id"],
+                "context_used": [], "blocked": True}
+    # Guardian: strip personal identifiers before anything reaches the model.
+    message, redactions = ai_safety.redact_pii(req.message)
+    if redactions: audit.record(DEMO_USER, "pii_redacted", ", ".join(redactions))
     ctx = {}
     if req.scenario_results: ctx["financial_twin_results"] = req.scenario_results   # recomputed on server in prod flow
     if req.compare:
         try: ctx["marketplace_comparison"] = marketplace.compare(req.compare.a, req.compare.b)
         except (KeyError, ValueError) as e: raise HTTPException(422, str(e))
     try:
-        res = await backboard.send(req.message, ctx or None, req.thread_id, STATE["assistant_id"], req.memory_enabled)
+        res = await backboard.send(message, ctx or None, req.thread_id, STATE["assistant_id"], req.memory_enabled)
     except backboard.BackboardError as e:
         raise HTTPException(502, str(e))
     STATE["assistant_id"] = res["assistant_id"]
-    return {**res, "context_used": list(ctx.keys())}
+    # Guardian: replace risky promises, add an education-only note on investing answers.
+    safe = ai_safety.sanitize_ai_output(res.get("reply") or "", req.message)
+    if "risky_financial_claim" in safe["flags"]: audit.record(DEMO_USER, "ai_output_replaced", "risky financial claim")
+    return {**res, "reply": safe["text"], "context_used": list(ctx.keys()),
+            "safety": {"pii_redacted": redactions, "output_flags": safe["flags"]}}
 
 @app.get("/api/memory")
 async def memory():
@@ -72,3 +86,8 @@ async def delete_memory(memory_id: str):
 def recommendations(goals: str = ""):
     return {"label": "Relevant to Your Goals",
             "recommendations": marketplace.goal_recommendations([g for g in goals.split(",") if g])}
+
+@app.get("/api/security-activity")
+def security_activity(limit: int = Query(20, ge=1, le=100)):
+    """Recent security events for the activity panel. Single demo persona, so no per-user filter."""
+    return audit.recent(None, limit)
