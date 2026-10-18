@@ -184,7 +184,7 @@ export default function Twin() {
 
       <div className="grid items-start gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
         {/* ───────── control panel ───────── */}
-        <aside className="space-y-4 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pr-1" aria-label="Simulation controls">
+        <aside className="space-y-4 lg:sticky lg:top-[72px] lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto lg:pr-1" aria-label="Simulation controls">
           <Card>
             <div className="mb-3 flex items-center justify-between"><Eyebrow>Starting position</Eyebrow><DemoBadge /></div>
             <Stat label="Starting investment" amount={dash.portfolio.total} sub="Brokerage balance from the Dashboard (demo)" />
@@ -235,7 +235,7 @@ export default function Twin() {
           {!valid && <ErrorBox title="Inputs need attention" message="Fix the highlighted inputs to update the projection. Showing the last valid results below." />}
           {simErr && <ErrorBox title="Simulation failed" message={friendlyError(simErr, 'the simulation')} onRetry={() => run(form)} />}
           {!sim ? (!simErr && <div role="status" aria-label="Running simulation…" className="space-y-4"><SkeletonCard lines={1} /><Card><Skeleton className="h-72 w-full" /></Card></div>) : (<>
-            <div className="sticky top-12 z-20 -mx-1 rounded-xl border border-line bg-white/95 px-4 py-3 shadow-md backdrop-blur" aria-label="Summary" role="region">
+            <div className="sticky top-14 z-20 -mx-1 rounded-xl border border-line bg-white/95 px-4 py-3 shadow-md backdrop-blur" aria-label="Summary" role="region">
               <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
                   <div><Eyebrow>Hypothetical ending value</Eyebrow><div className="flex items-center gap-2"><Money value={sim.hypothetical.ending_value} className="text-2xl font-semibold text-blue-700" />{busy && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" aria-label="Updating" />}</div></div>

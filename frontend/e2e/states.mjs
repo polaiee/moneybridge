@@ -6,7 +6,7 @@ const seed = (page) => page.evaluate(() => { localStorage.clear(); localStorage.
   await page.goto(BASE + '/dashboard'); await page.getByRole('alert').waitFor()
   const t = await page.getByRole('alert').innerText()
   check('dashboard: friendly backend-down message + Retry', /Can’t reach the MoneyBridge backend/.test(t) && await page.getByRole('button', { name: 'Retry' }).isVisible(), t.replace(/\n/g, ' '))
-  await page.unroute('**/api/**'); await page.getByRole('button', { name: 'Retry' }).click(); await page.getByText('Your financial overview').waitFor()
+  await page.unroute('**/api/**'); await page.getByRole('button', { name: 'Retry' }).click(); await page.getByText('Net worth', { exact: true }).first().waitFor()
   check('retry recovers', true)
   await page.goto(BASE + '/marketplace'); await page.getByRole('article').first().waitFor()
   await page.route('**/api/chat', (r) => r.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ detail: 'Backboard 401: invalid key' }) }))

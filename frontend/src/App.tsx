@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import Layout from './components/Layout'
+import AppShell from './shell/AppShell'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Twin from './pages/Twin'
@@ -14,7 +14,7 @@ export default function App() {
     <Routes>
       <Route path="/onboarding" element={<Onboarding />} />
       {profile ? (
-        <Route element={<Layout />}>
+        <Route element={<AppShell />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/twin" element={<Twin />} />
           <Route path="/companion" element={<Companion />} />

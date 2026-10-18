@@ -170,7 +170,7 @@ export default function Marketplace() {
         </section>)}
 
       {sel.length > 0 && (
-        <div className="fade-in fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 px-4 py-3 shadow-pop backdrop-blur lg:left-60" role="region" aria-label="Comparison bar">
+        <div className="fade-in fixed inset-x-0 bottom-16 z-30 border-t border-line bg-white/95 px-4 py-3 shadow-pop backdrop-blur md:bottom-0 md:left-[72px]" role="region" aria-label="Comparison bar">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3">
             <div className="flex-1 text-sm"><b>{sel.length} of 2 selected</b> · {selCat} {selProducts.map((p) => <span key={p.id} className="ml-2 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-xs">{p.name}<button aria-label={`Remove ${p.name}`} onClick={() => remove(p.id)}><X size={12} /></button></span>)}</div>
             {cmpErr && <span className="text-xs text-danger">{cmpErr}</span>}

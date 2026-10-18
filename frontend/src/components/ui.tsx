@@ -13,7 +13,7 @@ export function Card({ children, className = '', tone = 'white' }: { children: R
     lime: 'bg-lime-100 border-lime-200 text-forest-900',
     dark: 'on-dark bg-forest-900 border-forest-800 text-ivory shadow-md',
   }[tone]
-  return <section className={`rounded-3xl border p-5 shadow-sm sm:p-6 ${t} ${className}`}>{children}</section>
+  return <section className={`rounded-[20px] border p-4 sm:p-5 ${tone === 'dark' ? '' : 'shadow-xs'} ${t} ${className}`}>{children}</section>
 }
 
 export const Eyebrow = ({ children, className = '' }: { children: ReactNode; className?: string }) => <div className={`eyebrow ${className}`}>{children}</div>
@@ -117,7 +117,7 @@ export function PageHeader({ title, sub, right, eyebrow }: { title: string; sub?
     <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
         {eyebrow && <Eyebrow className="mb-1.5 !text-forest-600">{eyebrow}</Eyebrow>}
-        <h1 className="text-4xl leading-[1.05] text-forest-900 sm:text-5xl">{title}</h1>
+        <h1 className="text-3xl leading-tight text-forest-900 sm:text-4xl">{title}</h1>
         {sub && <p className="mt-2 max-w-2xl text-sm text-muted">{sub}</p>}
       </div>
       {right}

@@ -1,6 +1,4 @@
 @import "@fontsource-variable/geist";
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/instrument-serif/400-italic.css";
 @import "tailwindcss";
 
 /* ───────── MoneyBridge design tokens: single source of truth ─────────
@@ -9,7 +7,7 @@
    forest-900 on lime-400 8.9:1; coral-600 on white 4.9:1. Lime is never used as text on light backgrounds. */
 @theme {
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --font-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-num: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
 
   /* forest (anchor) */
@@ -83,9 +81,9 @@ body {
   color: var(--color-ink); font-family: var(--font-sans); font-size: var(--text-base);
   -webkit-font-smoothing: antialiased; overflow-x: hidden;
 }
-/* headings: serif display for page titles; sans for card titles */
-h1 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.015em; }
-h2, h3 { font-family: var(--font-sans); letter-spacing: -0.012em; }
+/* sans-serif only: Geist throughout */
+h1 { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0.03em; }
+h2, h3 { font-family: var(--font-sans); letter-spacing: -0.015em; }
 /* money / numerals: tabular, one consistent face */
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; font-feature-settings: "tnum"; }
 .tabular { font-variant-numeric: tabular-nums; }

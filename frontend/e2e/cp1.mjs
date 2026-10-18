@@ -15,8 +15,8 @@ await page.getByRole('button', { name: 'Go to my dashboard' }).click()
 await page.waitForURL('**/dashboard')
 const p = JSON.parse(await page.evaluate(() => localStorage.getItem('mb.profile')))
 check('profile persisted', p.stage === 'student' && p.level === 'intermediate' && p.goals.length === 2, JSON.stringify(p))
-for (const n of ['Dashboard', 'Financial Twin', 'AI Companion', 'Marketplace']) { const l = page.getByRole('navigation', { name: 'Primary' }).getByText(n); await l.waitFor(); check(`sidebar has ${n}`, await l.isVisible()) }
-await page.getByRole('navigation', { name: 'Primary' }).getByText('Marketplace').click()
+for (const n of ['Dashboard', 'Financial Twin', 'AI Companion', 'Marketplace']) { const l = page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: n }); await l.waitFor(); check(`sidebar has ${n}`, await l.isVisible()) }
+await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Marketplace' }).click()
 await page.waitForURL('**/marketplace'); check('nav works', true)
 await page.reload(); check('stays in app after reload', page.url().endsWith('/marketplace'))
 await page.screenshot({ path: process.env.SHOT || '/tmp/cp1.png' })
