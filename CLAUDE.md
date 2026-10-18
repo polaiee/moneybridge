@@ -1,5 +1,5 @@
 # MoneyBridge
-Source of truth: docs/SPEC.md, docs/REQUIREMENTS.md, docs/ui/*.png (visuals), and backend/ (already built and tested).
+Source of truth: docs/SPEC.md, docs/REQUIREMENTS.md, docs/inspiration/*.png (visual quality bar), and backend/ (already built and tested).
 
 ## Rules
 - The backend in backend/ is done: simulation math, demo data, marketplace, Backboard wrapper. Extend it, don't rewrite it.
@@ -12,3 +12,4 @@ Source of truth: docs/SPEC.md, docs/REQUIREMENTS.md, docs/ui/*.png (visuals), an
 - The backend must load backend/.env (add python-dotenv).
 - No AI-generated numbers, no real banking or trading, no extra integrations.
 - Report at each checkpoint: what was built, what was tested, what's broken, what's next.
+- DESIGN: docs/wireframes-old contains obsolete layout sketches; ignore their look and layout. docs/inspiration is the target quality bar. Rebuild the UI from scratch to match that level of craft. Palette: deep forest green #173B37, sage #668D81, ivory #F8F7F2, a lime accent for highlights, soft lilac for AI. Never change numbers, API calls, calculations, or demo/hypothetical labels.

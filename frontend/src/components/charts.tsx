@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react'
 
-export const C = { blue: '#3676d8', blueDeep: '#234e98', teal: '#22a58a', tealDeep: '#146e5c', amber: '#d98a1c', violet: '#6a4fc0', grid: '#e6ebf3', axis: '#5b6780' }
+export const C = { forest: '#173b37', forest2: '#285c55', sage: '#668d81', lime: '#c8ea54', limeDeep: '#6b8316', coral: '#e07a5f', lilac: '#b6a5e4',
+  // legacy keys used by pages not yet redesigned, mapped onto the new palette
+  blue: '#285c55', blueDeep: '#173b37', teal: '#8fae1f', tealDeep: '#6b8316', amber: '#d98a1c', violet: '#6b55b5', grid: '#e2dece', axis: '#5b6659' }
 export const AXIS = { fontSize: 11, fill: C.axis } as const
 
 interface TipRow { label: string; value: string; color?: string; strong?: boolean }
 /** Shared tooltip chrome: dark popover with color-keyed rows. */
 export function TipBox({ title, rows, foot }: { title?: ReactNode; rows: TipRow[]; foot?: ReactNode }) {
   return (
-    <div className="min-w-[160px] rounded-lg bg-slate-900 px-3 py-2.5 text-xs text-white shadow-pop">
+    <div className="min-w-[160px] rounded-xl bg-forest-950 px-3 py-2.5 text-xs text-white shadow-pop">
       {title && <div className="mb-1.5 font-semibold text-slate-200">{title}</div>}
       <div className="space-y-1">{rows.map((r) => (
         <div key={r.label} className="flex items-center justify-between gap-4">
