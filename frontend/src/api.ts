@@ -5,6 +5,8 @@
 const API_BASE = ((import.meta.env.VITE_API_URL as string | undefined) ?? '').replace(/\/+$/, '')
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
+  // A deployed build with no backend URL would send /api/* to the static host and get a confusing 404, so say what's wrong.
+  if (import.meta.env.PROD && !API_BASE && !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname)) throw new Error('VITE_API_URL is not set for this deployment, so the app cannot reach the backend. Set it in the hosting settings and redeploy.')
   const r = await fetch(`${API_BASE}${path}`, { headers: { 'Content-Type': 'application/json' }, ...init })
   if (!r.ok) {
     let detail = `${r.status}`

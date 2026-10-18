@@ -35,12 +35,13 @@ Tests (optional): `cd backend && .venv/bin/python -m pytest` (simulation math, d
 **Backend** (Render, Railway or similar; Python 3.11 is pinned in `backend/.python-version`):
 
 - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT` (also in `backend/Procfile`). Build command: `pip install -r requirements.txt`. Root directory: `backend/`.
-- Environment variables: `BACKBOARD_API_KEY` (the key, set in the host's secret settings, never in git) and `CORS_ORIGINS` (comma-separated, your deployed frontend URL, e.g. `https://moneybridge.vercel.app`; default `http://localhost:5173`).
+- Environment variables: `BACKBOARD_API_KEY` (the key, set in the host's secret settings, never in git) and `CORS_ORIGINS` (comma-separated, your deployed frontend's *production* domain, exact match including `https://`, e.g. `https://moneybridge.vercel.app`; default `http://localhost:5173`). A browser on any other origin gets a 400 "Disallowed CORS origin", including Vercel's per-deployment preview URLs.
 
 **Frontend** (Vercel or similar; root directory `frontend/`, build `npm run build`, output `dist`):
 
 - Environment variable: `VITE_API_URL` = the deployed backend URL, no trailing slash. Leave it unset for local development (the dev server proxies `/api`).
-- `frontend/vercel.json` rewrites every route to `index.html`, so deep links like `/twin` and `/marketplace` load directly.
+- `frontend/vercel.json` rewrites every route except `/api/*` to `index.html`, so deep links like `/twin` and `/marketplace` load directly. If the app shows "VITE_API_URL is not set", the variable was missing at build time: add it and **redeploy** (Vite bakes it in when it builds).
+- Deploy from the branch that has the current code (`master`). Set Vercel's **Production Branch** to it.
 
 The backend keeps the Backboard assistant id in memory, so a backend restart starts a fresh assistant; press **New conversation** in the Companion if an old thread errors.
 
