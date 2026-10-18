@@ -4,31 +4,21 @@ import { Brain, GitBranch, Send, Sparkles, Store, Trash2, User } from 'lucide-re
 import { api } from '../api'
 import { Badge, Button, Card, EmptyState, ErrorBox, Eyebrow, PageHeader } from '../components/ui'
 import { friendlyError } from '../lib/errors'
+import { useAsk } from '../lib/useAsk'
+import Rich from '../components/Rich'
 import { useStore, type PendingAsk } from '../store'
-import { goalLabel } from '../lib/roadmap'
 
 interface MemoryRow { id: string; text: string }
 function parseMemories(raw: unknown): MemoryRow[] {
   const arr = Array.isArray(raw) ? raw : (raw as { memories?: unknown[] })?.memories ?? []
   return (arr as Record<string, unknown>[]).map((m, i) => ({ id: String(m.id ?? i), text: String(m.content ?? m.memory ?? m.text ?? JSON.stringify(m)) }))
 }
-/** Minimal, safe rendering of the model's **bold**, numbered and bulleted text (no HTML injection). */
-function Rich({ text }: { text: string }) {
-  const inline = (t: string) => t.split(/(\*\*[^*]+\*\*)/g).map((part, i) => part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{part.slice(2, -2)}</strong> : <span key={i}>{part}</span>)
-  return <div className="space-y-1.5">{text.split('\n').map((line, i) => {
-    if (!line.trim()) return <div key={i} className="h-1" />
-    const m = line.match(/^\s*(?:(\d+)\.|[-•])\s+(.*)$/)
-    if (m) return <div key={i} className="flex gap-2 pl-1"><span className="num shrink-0 text-muted">{m[1] ? `${m[1]}.` : '•'}</span><span>{inline(m[2])}</span></div>
-    return <p key={i}>{inline(line)}</p>
-  })}</div>
-}
 const CONTEXT_LABEL: Record<string, string> = { financial_twin_results: 'Financial Twin results', marketplace_comparison: 'Marketplace comparison' }
 
 export default function Companion() {
-  const { chat, setChat, threadId, setThreadId, memoryEnabled, setMemoryEnabled, shareProfile, setShareProfile, profile,
+  const { chat, memoryEnabled, setMemoryEnabled, shareProfile, setShareProfile,
     twinContext, compareContext, pendingAsk, setPendingAsk, newConversation } = useStore()
   const [input, setInput] = useState('')
-  const [busy, setBusy] = useState(false)
   const [memories, setMemories] = useState<MemoryRow[]>([])
   const [memErr, setMemErr] = useState<string | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
@@ -37,26 +27,8 @@ export default function Companion() {
     api.memories().then((r) => { setMemories(parseMemories(r)); setMemErr(null) }).catch((e: Error) => setMemErr(e.message))
   }, [])
   useEffect(loadMemories, [loadMemories])
+  const { send, busy } = useAsk(useCallback(() => { if (memoryEnabled) setTimeout(loadMemories, 2500) }, [memoryEnabled, loadMemories]))
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }) }, [chat, busy])
-
-  const send = useCallback(async (message: string, opts: { scenario?: boolean; compare?: boolean } = {}) => {
-    const text = message.trim(); if (!text || busy) return
-    setChat((c) => [...c, { role: 'user', text }]); setBusy(true)
-    const profileLine = shareProfile && profile
-      ? `\n\n[User-approved profile — goals: ${profile.goals.map(goalLabel).join(', ') || 'none'}; experience level: ${profile.level}; life stage: ${profile.stage}]` : ''
-    try {
-      const r = await api.chat({
-        message: text + profileLine, thread_id: threadId, memory_enabled: memoryEnabled,
-        scenario_results: opts.scenario && twinContext ? { inputs: twinContext.scenario, baseline_inputs: twinContext.baseline, results: twinContext.results } : undefined,
-        compare: opts.compare && compareContext ? { a: compareContext.a, b: compareContext.b } : undefined,
-      })
-      setThreadId(r.thread_id)
-      setChat((c) => [...c, { role: 'assistant', text: r.reply, contextUsed: r.context_used }])
-      if (memoryEnabled) setTimeout(loadMemories, 2500)
-    } catch (e) {
-      setChat((c) => [...c, { role: 'assistant', error: true, text: `${friendlyError((e as Error).message, 'an answer')} If the problem persists, start a new conversation.` }])
-    } finally { setBusy(false) }
-  }, [busy, shareProfile, profile, threadId, memoryEnabled, twinContext, compareContext, setChat, setThreadId, loadMemories])
 
   // Requests handed over from the Twin / Marketplace run once on arrival.
   const consumed = useRef<PendingAsk | null>(null)

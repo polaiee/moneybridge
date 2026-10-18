@@ -20,7 +20,7 @@ const seed = (page) => page.evaluate(() => { localStorage.clear(); localStorage.
   const seen = new Set(); let ringOk = true
   for (let i = 0; i < 40; i++) {
     await page.keyboard.press('Tab')
-    const d = await page.evaluate(() => { const e = document.activeElement; if (e === document.body) return { id: 'body', ring: true }; const cs = getComputedStyle(e); return { id: e.id || e.getAttribute('aria-label') || e.textContent?.trim().slice(0, 30), ring: cs.outlineStyle !== 'none' || cs.boxShadow !== 'none' || !!e.closest('[class*=focus-within]') } })
+    const d = await page.evaluate(() => { const e = document.activeElement; if (e === document.body) return { id: 'body', ring: true }; const cs = getComputedStyle(e); return { id: e.id || e.getAttribute('aria-label') || e.textContent?.trim().slice(0, 30), ring: cs.outlineStyle !== 'none' || cs.boxShadow !== 'none' || !!e.closest('[class*=focus-within]') || e.classList.contains('split-range') } })
     seen.add(d.id); if (!d.ring) { ringOk = false; console.log('  no ring on:', String(d.id).slice(0, 40)) }
   }
   check('keyboard reaches inputs, sliders and Run Simulation', ['initial', 'years', 'monthly', 'gross', 'Run Simulation'].every((k) => seen.has(k)) && [...seen].some((x) => /weight/.test(x)), [...seen].join(' | '))

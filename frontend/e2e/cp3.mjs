@@ -9,7 +9,7 @@ check('starting portfolio is the demo $12,000', (await main()).includes('$12,000
 // reference case from CLAUDE.md: $10k, $300/mo, 6%, 0.05% fee, 10y => $67,134
 await page.fill('#initial', '10000'); await page.fill('#baseMonthly', '300')
 await page.locator('input[aria-label="Demo US Equity ETF weight"]').fill('100')
-await page.locator('input[aria-label="Demo International ETF weight"]').fill('0')
+check('divider rebalances the other fund (International → 0)', (await page.locator('#w1').inputValue()) === '0')
 await page.waitForFunction(() => document.querySelector('main').innerText.includes('$67,134'), null, { timeout: 8000 }).catch(() => {})
 let t = await main()
 check('reference case ending value $67,134', t.includes('$67,134'))

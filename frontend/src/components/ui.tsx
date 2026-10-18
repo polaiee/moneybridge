@@ -45,9 +45,10 @@ export const HypoBadge = ({ children = 'Hypothetical' }: { children?: ReactNode 
 export const IllusBadge = ({ children = 'Illustrative' }: { children?: ReactNode }) => <Badge tone="illus">{children}</Badge>
 
 /* ───────── Buttons: pill, with hover and pressed states ───────── */
-export function Button({ variant = 'primary', size = 'md', className = '', ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'accent' | 'secondary' | 'ghost'; size?: 'sm' | 'md' | 'lg' }) {
+export function Button({ variant = 'primary', size = 'md', className = '', ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'accent' | 'ai' | 'secondary' | 'ghost'; size?: 'sm' | 'md' | 'lg' }) {
   const v = {
     primary: 'bg-forest-900 text-ivory shadow-sm hover:bg-forest-800 active:bg-forest-950 disabled:bg-forest-900/35',
+    ai: 'bg-lilac-300 text-forest-950 shadow-sm hover:bg-[#c6b8ec] active:bg-[#a999dc] disabled:opacity-50',
     accent: 'bg-lime-400 text-forest-900 shadow-sm hover:bg-lime-300 active:bg-lime-500 disabled:opacity-50',
     secondary: 'border border-sand-300 bg-card text-forest-900 hover:border-forest-300 hover:bg-forest-50 active:bg-forest-100 disabled:opacity-50',
     ghost: 'text-forest-800 hover:bg-forest-50 active:bg-forest-100 disabled:opacity-50',
