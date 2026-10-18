@@ -48,3 +48,10 @@ def test_api_recommendations_and_dotenv():
     r = c.get("/api/marketplace/recommendations", params={"goals": "emergency_savings,investing,credit_building"}).json()
     assert [x["category"] for x in r["recommendations"]] == ["savings", "investing"]
     assert c.get("/api/dashboard").json()["net_worth"] == 22000
+
+
+def test_cors_origins_from_env(monkeypatch):
+    from app.main import parse_origins
+    assert parse_origins(None) == ["http://localhost:5173"]
+    assert parse_origins("") == ["http://localhost:5173"]
+    assert parse_origins("https://a.vercel.app/, http://localhost:5173 ,") == ["https://a.vercel.app", "http://localhost:5173"]

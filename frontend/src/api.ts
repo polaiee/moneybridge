@@ -1,5 +1,11 @@
+/**
+ * API base URL. Empty (the default) means same-origin `/api/...`, which the Vite dev server proxies to the backend.
+ * In production set VITE_API_URL to the deployed backend, e.g. https://moneybridge-api.onrender.com (no trailing slash).
+ */
+const API_BASE = ((import.meta.env.VITE_API_URL as string | undefined) ?? '').replace(/\/+$/, '')
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...init })
+  const r = await fetch(`${API_BASE}${path}`, { headers: { 'Content-Type': 'application/json' }, ...init })
   if (!r.ok) {
     let detail = `${r.status}`
     try { const j = await r.json(); detail = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail) } catch { /* keep status */ }

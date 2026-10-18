@@ -1,3 +1,4 @@
+import os
 from dotenv import load_dotenv
 from pathlib import Path
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -7,7 +8,12 @@ from pydantic import BaseModel
 from . import demo_data, marketplace, simulation, backboard
 
 app = FastAPI(title="MoneyBridge API")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], allow_methods=["*"], allow_headers=["*"])
+def parse_origins(raw: str | None) -> list[str]:
+    """CORS_ORIGINS is a comma-separated list of allowed browser origins (default: the local Vite dev server)."""
+    items = [o.strip().rstrip("/") for o in (raw or "").split(",") if o.strip()]
+    return items or ["http://localhost:5173"]
+
+app.add_middleware(CORSMiddleware, allow_origins=parse_origins(os.getenv("CORS_ORIGINS", "http://localhost:5173")), allow_methods=["*"], allow_headers=["*"])
 STATE = {"assistant_id": None}  # demo-only single isolated identity (Alex Morgan / demo user)
 
 @app.get("/api/health")
