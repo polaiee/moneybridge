@@ -10,9 +10,9 @@ import { FUND, type Validation } from './model'
  * Left, sticky instrument panel (one continuous surface): starting position, hypothetical plan, allocation, sticky footer.
  * Below 1024px it is not sticky and stacks above the results.
  */
-export default function ControlPanel({ dash, form, set, v, valid, busy, onRun, onReset, onExplain, className = '' }: {
+export default function ControlPanel({ dash, form, set, v, valid, busy, onRun, onReset, onExplain, hover, setHover, className = '' }: {
   dash: Dashboard; form: TwinForm; set: (p: Partial<TwinForm>) => void; v: Validation; valid: boolean; busy: boolean
-  onRun: () => void; onReset: () => void; onExplain: () => void; className?: string
+  onRun: () => void; onReset: () => void; onExplain: () => void; hover: number | null; setHover: (i: number | null) => void; className?: string
 }) {
   const cur = dash.portfolio.holdings
   return (
@@ -50,7 +50,7 @@ export default function ControlPanel({ dash, form, set, v, valid, busy, onRun, o
         </section>
 
         {/* C. Allocation */}
-        <section aria-label="Allocation" className="border-t border-dashed border-sand-300 pt-5"><SplitBar form={form} v={v} set={set} /></section>
+        <section aria-label="Allocation" className="border-t border-dashed border-sand-300 pt-5"><SplitBar form={form} v={v} set={set} hover={hover} setHover={setHover} /></section>
       </div>
 
       {/* sticky footer */}

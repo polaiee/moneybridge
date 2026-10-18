@@ -5,10 +5,14 @@ import { friendlyError } from '../lib/errors'
 import { useAsync } from '../lib/useAsync'
 import { useStore, type TwinForm } from '../store'
 import AiPanel from './twin/AiPanel'
+import AllocationCompare from './twin/AllocationCompare'
+import { AssumptionsAccordion, AssumptionsStrip } from './twin/Assumptions'
 import ControlPanel from './twin/ControlPanel'
-import Legacy from './twin/Legacy'
+import FeeImpact from './twin/FeeImpact'
 import { initialForm, toScenario, validate } from './twin/model'
 import Projection from './twin/Projection'
+import Quiz from './twin/Quiz'
+import RiskTiles from './twin/RiskTiles'
 import SummaryBar from './twin/SummaryBar'
 
 interface Result { sim: SimResult; baseSim: SimResult; scenario: Scenario; baseline: Scenario }
@@ -25,6 +29,7 @@ export default function Twin() {
   const [busy, setBusy] = useState(false)
   const [simErr, setSimErr] = useState<string | null>(null)
   const [aiOpen, setAiOpen] = useState(false)
+  const [hoverFund, setHoverFund] = useState<number | null>(null) // shared by the allocation comparison and the panel's fund rows
   const seq = useRef(0)
 
   useEffect(() => { if (dash && !form) setFormState(initialForm(dash)) }, [dash, form])
@@ -64,7 +69,7 @@ export default function Twin() {
     <>
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:items-start">
         <ControlPanel className="order-2 lg:order-none lg:sticky lg:top-[72px] lg:col-span-5 xl:col-span-4" dash={dash} form={form} set={set} v={v} valid={valid} busy={busy}
-          onRun={() => valid && run(form)} onReset={() => setForm(initialForm(dash))} onExplain={explain} />
+          onRun={() => valid && run(form)} onReset={() => setForm(initialForm(dash))} onExplain={explain} hover={hoverFund} setHover={setHoverFund} />
 
         <div className="contents lg:col-span-7 lg:flex lg:min-w-0 lg:flex-col lg:gap-4 xl:col-span-8">
           <SummaryBar className="order-1 lg:order-none" sim={res?.sim ?? null} busy={busy} onExplain={explain} />
@@ -74,7 +79,16 @@ export default function Twin() {
             {!res ? (!simErr && <div role="status" aria-label="Running simulation…"><Card><Skeleton className="h-[360px] w-full" /></Card></div>) : (
               <div className={`flex flex-col gap-4 transition-opacity ${busy || !valid ? 'opacity-75' : ''}`}>
                 <Projection sim={res.sim} scenario={res.scenario} />
-                <Legacy dash={dash} form={form} sim={res.sim} baseSim={res.baseSim} scenario={res.scenario} />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <AllocationCompare dash={dash} form={form} hover={hoverFund} setHover={setHoverFund} />
+                  <FeeImpact sim={res.sim} baseSim={res.baseSim} scenario={res.scenario} />
+                </div>
+                <RiskTiles sim={res.sim} scenario={res.scenario} />
+                <AssumptionsStrip sim={res.sim} />
+                <div className="grid items-start gap-4 md:grid-cols-2">
+                  <AssumptionsAccordion sim={res.sim} />
+                  <Quiz />
+                </div>
               </div>)}
           </div>
         </div>

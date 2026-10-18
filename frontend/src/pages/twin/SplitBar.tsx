@@ -11,7 +11,7 @@ const HATCH = 'repeating-linear-gradient(45deg, rgba(197,84,58,0.55) 0 6px, rgba
  * Allocation control. The track IS the 100% total: a draggable divider rebalances the other fund, so dragging can never
  * leave the total off 100. Typing a weight directly is still allowed; an invalid total shows hatched coral + the exact message.
  */
-export default function SplitBar({ form, v, set }: { form: TwinForm; v: Validation; set: (p: Partial<TwinForm>) => void }) {
+export default function SplitBar({ form, v, set, hover, setHover }: { form: TwinForm; v: Validation; set: (p: Partial<TwinForm>) => void; hover?: number | null; setHover?: (i: number | null) => void }) {
   const hs = form.holdings
   const w = hs.map((h) => num(h.weight) || 0)
   const invalid = !!v.errors.total
@@ -56,9 +56,9 @@ export default function SplitBar({ form, v, set }: { form: TwinForm; v: Validati
       {!two && <div className="mt-3 space-y-2">{hs.map((h, i) => (
         <input key={h.name} type="range" min={0} max={100} step={1} value={Math.min(100, Math.max(0, w[i]))} aria-label={`${h.name} weight`} onChange={(e) => set({ holdings: linkedWeights(form, i, Number(e.target.value)) })} className="w-full" />))}</div>}
 
-      <div className="mt-3 divide-y divide-dashed divide-sand-300">
+      <div className="-mx-2 mt-2 divide-y divide-dashed divide-sand-300">
         {hs.map((h, i) => (
-          <div key={h.name} className="py-3 first:pt-1">
+          <div key={h.name} data-fund-row={i} onMouseEnter={() => setHover?.(i)} onMouseLeave={() => setHover?.(null)} className={`rounded-xl px-2 py-3 transition-colors first:pt-2 ${hover === i ? 'bg-lime-100' : ''}`}>
             <div className="mb-2 flex items-center gap-2"><span className="h-3 w-3 shrink-0 rounded-[4px] ring-1 ring-black/10" style={{ background: FUND[i % 3].bg }} /><span className="text-sm font-medium leading-snug [overflow-wrap:anywhere]">{h.name}</span></div>
             <div className="grid grid-cols-2 gap-2.5">
               <NumField compact id={`w${i}`} label="Weight" suffix="%" value={h.weight} onChange={(x) => setHolding(i, { weight: x })} error={v.errors[`w${i}`]} />
