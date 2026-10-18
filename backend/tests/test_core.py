@@ -40,3 +40,11 @@ def test_marketplace_compare_rules():
     with pytest.raises(ValueError): m.compare("sav-rainy", "bank-everyday")
     with pytest.raises(ValueError): m.compare("sav-rainy", "sav-rainy")
     assert len(m.goal_recommendations(["emergency_savings", "investing", "credit_building"])) == 2
+
+def test_api_recommendations_and_dotenv():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    c = TestClient(app)
+    r = c.get("/api/marketplace/recommendations", params={"goals": "emergency_savings,investing,credit_building"}).json()
+    assert [x["category"] for x in r["recommendations"]] == ["savings", "investing"]
+    assert c.get("/api/dashboard").json()["net_worth"] == 22000

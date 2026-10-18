@@ -1,10 +1,13 @@
+from dotenv import load_dotenv
+from pathlib import Path
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from . import demo_data, marketplace, simulation, backboard
 
 app = FastAPI(title="MoneyBridge API")
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], allow_methods=["*"], allow_headers=["*"])
 STATE = {"assistant_id": None}  # demo-only single isolated identity (Alex Morgan / demo user)
 
 @app.get("/api/health")
@@ -58,3 +61,14 @@ async def memory():
     if not STATE["assistant_id"]: return {"memories": []}
     try: return await backboard.list_memories(STATE["assistant_id"])
     except backboard.BackboardError as e: raise HTTPException(502, str(e))
+
+@app.delete("/api/memory/{memory_id}")
+async def delete_memory(memory_id: str):
+    if not STATE["assistant_id"]: raise HTTPException(404, "No assistant yet")
+    try: return await backboard.delete_memory(STATE["assistant_id"], memory_id)
+    except backboard.BackboardError as e: raise HTTPException(502, str(e))
+
+@app.get("/api/marketplace/recommendations")
+def recommendations(goals: str = ""):
+    return {"label": "Relevant to Your Goals",
+            "recommendations": marketplace.goal_recommendations([g for g in goals.split(",") if g])}
