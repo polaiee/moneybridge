@@ -87,6 +87,16 @@ export function Stat({ label, value, amount, sub, tone, size = 'md' }: { label: 
   )
 }
 
+/** Accessible on/off switch (role="switch"). Space/Enter toggle it. */
+export function Switch({ checked, onChange, label, id }: { checked: boolean; onChange: (v: boolean) => void; label: string; id?: string }) {
+  return (
+    <button type="button" role="switch" id={id} aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-forest-900' : 'bg-sand-300'}`}>
+      <span aria-hidden className={`absolute top-0.5 h-5 w-5 rounded-full shadow-sm transition-all duration-200 ${checked ? 'left-[22px] bg-lime-400' : 'left-0.5 bg-card'}`} />
+    </button>
+  )
+}
+
 export const Skeleton = ({ className = '' }: { className?: string }) => <div aria-hidden className={`skeleton ${className}`} />
 export function SkeletonCard({ lines = 3, className = '' }: { lines?: number; className?: string }) {
   return <Card className={className}><Skeleton className="h-3 w-24" /><Skeleton className="mt-3 h-8 w-40" />{Array.from({ length: lines }).map((_, i) => <Skeleton key={i} className={`mt-3 h-3 ${i % 2 ? 'w-2/3' : 'w-full'}`} />)}</Card>

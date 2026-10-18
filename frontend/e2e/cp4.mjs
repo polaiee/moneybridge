@@ -30,7 +30,7 @@ check('reply labeled with Financial Twin context', txt.includes('Financial Twin 
 check('Companion thread shows the app-calculated ending value $' + endVal, dollars(txt).includes(endVal))
 const th = await page.evaluate(() => localStorage.getItem('mb.thread')); check('thread id persisted', !!th && th !== 'null')
 // follow-up on same thread
-await page.getByLabel('Message').fill('In one sentence, what was my fee about?'); await page.getByRole('button', { name: 'Send' }).click()
+await page.getByLabel('Message', { exact: true }).fill('In one sentence, what was my fee about?'); await page.getByRole('button', { name: 'Send' }).click()
 await page.getByText('Thinking…').waitFor().catch(() => {}); await page.getByText('Thinking…').waitFor({ state: 'detached', timeout: 90000 })
 check('follow-up answered', (await page.locator('main').innerText()).split('Educational explanation').length >= 3)
 // reload persistence

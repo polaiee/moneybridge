@@ -4,11 +4,11 @@ import { ChevronDown, RefreshCw, Sparkles, X } from 'lucide-react'
 import { Badge, Button, ErrorBox } from '../../components/ui'
 import Rich from '../../components/Rich'
 import { useAsk } from '../../lib/useAsk'
-import { usd, pct } from '../../lib/format'
+import { twinRows } from '../../lib/twinFigures'
 import { friendlyError } from '../../lib/errors'
+import { TWIN_MESSAGE } from '../../lib/prompts'
 import { useStore } from '../../store'
 
-const MESSAGE = 'Explain this Financial Twin scenario to me in plain language. Use only the numbers provided.'
 
 /** In-page AI slide-over: same POST /api/chat call and thread as the Companion, scenario results attached. */
 export default function AiPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -24,7 +24,7 @@ export default function AiPanel({ open, onClose }: { open: boolean; onClose: () 
 
   const ask = useCallback(async () => {
     setReply(null)
-    const r = await send(MESSAGE, { scenario: true })
+    const r = await send(TWIN_MESSAGE, { scenario: true })
     if (r) setReply({ text: r.text, error: r.error, used: r.contextUsed })
   }, [send])
 
@@ -55,13 +55,7 @@ export default function AiPanel({ open, onClose }: { open: boolean; onClose: () 
   }, [open, onClose])
 
   if (!open) return null
-  const r = twinContext?.results, s = twinContext?.scenario
-  const rows: [string, string][] = r && s ? [
-    ['Initial investment', usd(s.initial_investment)], ['Monthly contribution', usd(s.monthly_contribution)], ['Duration', `${s.years} years`], ['Gross return', pct(s.gross_return_pct, 1)],
-    ['Allocation', s.holdings.map((h) => `${h.name} ${h.weight_pct}%`).join(', ')], ['Weighted fee', pct(r.weighted_expense_ratio_pct)],
-    ['Ending value', usd(r.hypothetical.ending_value, 2)], ['Total contributions', usd(r.hypothetical.total_contributions, 2)], ['Modeled growth', usd(r.hypothetical.modeled_growth, 2)], ['Cost of fees', usd(r.fee_impact.cost_of_fees, 2)],
-    ['Downside / Base / Upside', `${usd(r.risk_scenarios.downside.ending_value, 2)} / ${usd(r.risk_scenarios.base.ending_value, 2)} / ${usd(r.risk_scenarios.upside.ending_value, 2)}`],
-  ] : []
+  const rows = twinRows(twinContext)
 
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="AI explanation of this scenario">

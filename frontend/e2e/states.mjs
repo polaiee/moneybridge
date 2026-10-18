@@ -10,7 +10,7 @@ const seed = (page) => page.evaluate(() => { localStorage.clear(); localStorage.
   check('retry recovers', true)
   await page.goto(BASE + '/marketplace'); await page.getByRole('article').first().waitFor()
   await page.route('**/api/chat', (r) => r.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ detail: 'Backboard 401: invalid key' }) }))
-  await page.goto(BASE + '/companion'); await page.getByLabel('Message').fill('hello'); await page.getByRole('button', { name: 'Send' }).click()
+  await page.goto(BASE + '/companion'); await page.getByLabel('Message', { exact: true }).fill('hello'); await page.getByRole('button', { name: 'Send' }).click()
   await page.getByText(/Backboard \(the AI service\)/).waitFor({ timeout: 5000 }); check('companion: Backboard failure shown inline', true)
   await browser.close()
 }

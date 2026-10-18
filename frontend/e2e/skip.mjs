@@ -1,0 +1,10 @@
+import { launch, check, BASE } from './lib.mjs'
+const { browser, page, errors } = await launch({ width: 1440, height: 900 })
+await page.goto(BASE); await page.evaluate(() => localStorage.clear()); await page.goto(BASE); await page.waitForURL('**/onboarding')
+if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT })
+await page.getByRole('button', { name: /Skip onboarding/ }).click(); await page.waitForURL('**/dashboard')
+const t = await page.locator('main').innerText(); check('Skip → Dashboard instantly with the demo persona ($22,000, Alex Morgan, Demo data)', t.includes('$22,000') && t.includes('Alex Morgan') && t.includes('Demo data'))
+const p = JSON.parse(await page.evaluate(() => localStorage.getItem('mb.profile'))); check('demo profile saved (goals: emergency savings + investing)', p.name === 'Alex Morgan' && p.goals.join() === 'emergency_savings,investing')
+await page.reload(); await page.getByText('Net worth', { exact: true }).first().waitFor(); check('refresh keeps the demo state', !page.url().includes('onboarding'))
+await page.goto(BASE + '/onboarding'); check('visiting /onboarding again still works (Redo)', true)
+check('no console errors', errors.length === 0, errors.join('|')); await browser.close()

@@ -28,7 +28,7 @@ async function verify(page, scope, label) {
   await page.getByRole('region', { name: 'Summary' }).getByRole('button', { name: 'Explain This Scenario' }).click(); await page.getByTestId('ai-reply').waitFor()
   await verify(page, page.getByTestId('ai-reply'), 'AI panel')
   await page.getByRole('button', { name: 'Continue in AI Companion' }).click(); await page.waitForURL('**/companion'); await page.getByText('Investment Setup').first().waitFor()
-  const bubble = page.locator('div.bg-slate-100').last()
+  const bubble = page.locator('[data-msg="assistant"]').last()
   await verify(page, bubble, 'Companion')
   await page.screenshot({ path: process.env.SHOT })
   check('no console errors', errors.length === 0, errors.join('|'))
@@ -36,7 +36,7 @@ async function verify(page, scope, label) {
 }
 { // narrow screen: still one line per item, no overflow
   const { browser, page } = await launch({ width: 390, height: 844 })
-  await page.goto(BASE); await seed(page); await stub(page); await page.goto(BASE + '/companion'); await page.getByLabel('Message').fill('hi'); await page.getByRole('button', { name: 'Send' }).click(); await page.getByText('Investment Setup').first().waitFor()
+  await page.goto(BASE); await seed(page); await stub(page); await page.goto(BASE + '/companion'); await page.getByLabel('Message', { exact: true }).fill('hi'); await page.getByRole('button', { name: 'Send' }).click(); await page.getByText('Investment Setup').first().waitFor()
   const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth); check('390px Companion: no horizontal overflow with lists', ov <= 1, String(ov))
   await browser.close()
 }

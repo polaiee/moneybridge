@@ -27,10 +27,10 @@ function Shell({ children, step, back, onBack }: { children: ReactNode; step?: n
           <h2 className="mt-6 text-4xl font-semibold leading-tight tracking-tight">Small steps.<br />Brighter possibilities.</h2>
           <p className="mt-4 max-w-sm text-muted">Connect the dots between where you are and where you want to be.</p>
           <svg viewBox="0 0 400 220" className="mt-auto w-full" aria-hidden="true">
-            <path d="M10 200 C 70 200, 80 40, 150 40 S 230 150, 280 150 S 340 60, 390 10" fill="none" stroke="#3676d8" strokeWidth="3" />
-            <path d="M280 150 S 340 60, 390 10" fill="none" stroke="#22a58a" strokeWidth="3" />
-            {[['Understand', 20, 200], ['Explore', 150, 40], ['Grow', 340, 50]].map(([t, x, y]) => (
-              <g key={t as string}><circle cx={x as number} cy={y as number} r="7" fill="#fff" stroke="#3676d8" strokeWidth="2" /><text x={x as number} y={(y as number) + 26} fontSize="11" textAnchor="middle" fill="#3676d8">{t}</text></g>
+            <path d="M10 200 C 70 200, 80 40, 150 40 S 230 150, 280 150 S 340 60, 390 10" fill="none" stroke="#173b37" strokeWidth="3" />
+            <path d="M280 150 S 340 60, 390 10" fill="none" stroke="#8fae1f" strokeWidth="3.5" />
+            {[['Understand', 20, 200], ['Explore', 150, 40], ['Grow', 330, 50]].map(([t, x, y]) => (
+              <g key={t as string}><circle cx={x as number} cy={y as number} r="7" fill="#c8ea54" stroke="#173b37" strokeWidth="2" /><text x={x as number} y={(y as number) + 28} fontSize="11" fontWeight="600" textAnchor="middle" fill="#173b37">{t}</text></g>
             ))}
           </svg>
         </div>
@@ -76,12 +76,16 @@ export default function Onboarding() {
       <Eyebrow>Create your demo profile</Eyebrow><H1>Your financial journey starts here.</H1>
       <Lead>One place to understand your money, discover useful tools, and make confident financial decisions.</Lead>
       <form className="mt-8 space-y-5" onSubmit={(e) => { e.preventDefault(); setStep('verify') }}>
+        <div className="rounded-2xl border border-lime-300 bg-lime-100 p-4">
+          <Button variant="accent" size="lg" type="button" className="w-full" onClick={() => finish(['emergency_savings', 'investing'])}>Skip onboarding · Use demo profile</Button>
+          <p className="mt-2 text-center text-xs text-forest-800">Start the demo instantly with the fictional Alex Morgan profile.</p>
+        </div>
+        <div className="eyebrow text-center">or set up your own demo profile</div>
         <label className="block"><span className="mb-1.5 block text-sm font-medium">Display name</span>
           <input value={name} onChange={(e) => setName(e.target.value)} className="w-full h-11 rounded-lg border border-line bg-white px-3.5 outline-none transition-shadow hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25" placeholder="Alex Morgan" /></label>
         <div className="flex items-start gap-2 rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm text-teal-800"><ShieldCheck size={18} className="mt-0.5 shrink-0" />
           <span>No password, email, bank login or SSN is collected. This is a demo profile that stays in your browser.</span></div>
         <Button size="lg" className="w-full" type="submit">Continue</Button>
-        <Button variant="ghost" size="lg" className="w-full" type="button" onClick={() => finish(['emergency_savings', 'investing'])}>Skip onboarding and use the demo profile</Button>
       </form>
     </Shell>
   )

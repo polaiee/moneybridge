@@ -1,20 +1,23 @@
 # MoneyBridge
 
-AI-assisted personal-finance prototype (Technica 2026): **Dashboard → Financial Twin → AI Companion → Marketplace**.
-Everything is a **fictional demo persona (Alex Morgan)**. No real banking, trading or accounts. Simulations are hypothetical educational illustrations, not advice.
+**One place for your money. Clarity for every decision.**
 
-- `backend/`: FastAPI. Deterministic simulation math, demo data, fictional marketplace catalog, Backboard wrapper.
+MoneyBridge is an AI-assisted personal-finance prototype (Technica 2026). It connects four things in one flow: a **Dashboard** that shows where you stand, a **Financial Twin** to try "what if" investing decisions, an **AI Companion** (Backboard) that explains the results, and a **Marketplace** to compare fictional financial products.
+
+It is not a bank, broker or robo-advisor. Nothing here is financial advice.
+
+- `backend/`: FastAPI. Deterministic simulation math, demo data, a fictional product catalog, and the Backboard wrapper.
 - `frontend/`: Vite + React + TypeScript + Tailwind + Recharts. `/api` is proxied to the backend.
 
-## Launch
+## Setup
 
-Prerequisites: Python 3.11+, Node 20+, a Backboard API key.
+Prerequisites: Python 3.11+, Node 20+, a [Backboard](https://app.backboard.io) API key.
 
 ```bash
 # 1. Backend (terminal 1)
 cd backend
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-cp .env.example .env            # then set BACKBOARD_API_KEY=... (never commit .env)
+cp .env.example .env            # then put your key in backend/.env:  BACKBOARD_API_KEY=...
 .venv/bin/uvicorn app.main:app --port 8000
 
 # 2. Frontend (terminal 2)
@@ -23,46 +26,26 @@ npm install
 npm run dev                     # http://localhost:5173
 ```
 
-The app works without a Backboard key except the AI Companion, which shows a clear inline error.
+**`BACKBOARD_API_KEY` lives only in `backend/.env`, which is git-ignored. Never commit it or paste it into the frontend.** Without a key everything works except the AI explanations, which show a clear inline error.
 
-## Tests
+Tests (optional): `cd backend && .venv/bin/python -m pytest` (simulation math, demo data, marketplace, API). The browser tests in `frontend/e2e/` need both servers running plus Google Chrome (`node e2e/journey.mjs`, and others; the AI steps call live Backboard).
 
-```bash
-cd backend && .venv/bin/python -m pytest          # 8 tests: simulation math, demo data, marketplace, API
-cd frontend && npx tsc -b && npm run build        # type check + production build
-# browser tests (need both servers running, plus Google Chrome; the AI steps call live Backboard)
-cd frontend && npm run e2e                        # onboarding, dashboard, twin, states, responsive, full journey
-node e2e/cp4.mjs && node e2e/cp5.mjs             # Companion + Marketplace-to-Companion (live Backboard)
-```
+## The demo path (about 3 minutes)
 
-Calculation convention (never changed): monthly rate = (gross − fee) / 12, contributions at month end.
-Reference case: $10k start, $300/month, 6% gross, 0.05% fee, 10 years → **$67,134** (asserted in the Twin e2e test).
+1. **Onboarding → start instantly.** On the first screen press **Skip onboarding · Use demo profile** (or click through the short flow).
+2. **Dashboard.** Net worth $22,000 for the fictional persona Alex Morgan. Click **Explore in Financial Twin**.
+3. **Financial Twin.** Drag the allocation divider (the total stays at 100%) and raise the monthly contribution. The projection, fees and risk scenarios update live, with the gap between the current and hypothetical plan shaded.
+4. **Explain This Scenario.** The AI panel opens in place and explains the exact figures the backend calculated. Press **Continue in AI Companion**.
+5. **AI Companion.** The same conversation continues. Ask a follow-up, and open "What the assistant is using" to see exactly what is sent.
+6. **Marketplace.** Pick **Savings**, press **Compare** on *Rainy Day Savings* and *Flexible Savings*, then **Compare** in the bar at the bottom.
+7. **Explain with MoneyBridge AI.** It opens the Companion with the comparison and explains the trade-offs using only the catalog data.
 
-## Demo script (≈3 min)
+Refreshing at any point keeps your profile, the conversation and the Twin/comparison context.
 
-1. Onboarding (or "Skip onboarding and use the demo profile").
-2. Dashboard: net worth $22,000 from demo data; click **Explore in Financial Twin**.
-3. Twin: drag the allocation slider (total stays 100%) and raise the monthly contribution; watch the shaded gap vs. the current plan. Click **Explain This Scenario**.
-4. AI Companion: the reply quotes the backend's exact numbers. Turn on memory and share-profile, then see/delete retained memories.
-5. Marketplace: pick two savings products, **Compare**, then **Explain with MoneyBridge AI**.
+## What's real vs. demo
 
-## What is real vs. demo vs. hypothetical
-
-| Label | Meaning |
-| --- | --- |
-| Demo data | The fictional Alex Morgan dataset (backend `demo_data.py`) |
-| Hypothetical / Illustrative | Twin outputs and the fictional marketplace catalog |
-| Illustrative assumption | The $300 "current monthly contribution" baseline. The demo data has no recorded contribution, so this is editable |
-
-## Privacy and AI
-
-Only the app-calculated Twin results or marketplace comparison are sent to Backboard, and only when you ask. Goals and experience level are sent only if you opt in. Balances and account data are never sent. Backboard memory is off by default and viewable/deletable in the Companion. Onboarding collects no password, email, bank login or SSN.
-
-## Known limitations
-
-- Chat history, the thread id and settings live in your browser's localStorage. The backend keeps the Backboard `assistant_id` in memory, so restarting the backend starts a fresh assistant (use *New conversation* if an old thread errors).
-- Manual account entry and add/edit accounts are not implemented (the backend has no endpoint for it).
-- The demo data has no history, so there is no cash-flow trend or spending breakdown, and no goal-progress bars.
-- Marketplace `account_fee` for investing products has no unit in the catalog; it is shown as `%` when non-zero. Per-product descriptions/risks are generic per category.
-- The Twin currently holds two fictional funds; the downside/upside rates (2% / 9%) are fixed by the backend.
-- The AI Companion's answers vary run to run. They are grounded in the supplied numbers but are LLM output, not verified advice.
+- **All data is fictional.** Alex Morgan, the accounts, the ETFs ("Demo US Equity ETF") and every product and provider in the Marketplace are made up. Every screen is labelled (Demo data, Demo Product, Hypothetical, Illustrative).
+- **Numbers are computed by deterministic Python**, not by AI. Monthly rate = (gross return − fee) ÷ 12, contributions at month end. A $10k start, $300/month, 6% gross, 0.05% fee, 10 years gives **$67,134** (covered by tests).
+- **The AI only explains.** The assistant receives the app's calculated results and is told to use only those numbers. It never calculates or invents figures, and its answers are educational, not advice.
+- **Privacy.** No bank connection, password, email or SSN is collected. Balances never go to the AI. Sharing your goals/level and Backboard memory are opt-in and visible in the Companion, where memories can be deleted.
+- **Not included:** real banking or trading, payments, live market data. Results are hypothetical illustrations, not forecasts.

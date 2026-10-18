@@ -39,7 +39,7 @@ await page.getByRole('region', { name: 'Comparison bar' }).getByRole('button', {
 await page.getByRole('button', { name: 'Explain with MoneyBridge AI' }).click()
 await page.waitForURL('**/companion'); await page.getByText('Used:').first().waitFor({ timeout: 90000 })
 const c = await page.locator('main').innerText()
-check('Companion opened with marketplace context', c.includes('Marketplace comparison'))
+check('Companion opened with marketplace context (Used: badge on the answer)', (await page.locator('[data-msg="assistant"]').last().innerText()).includes('Marketplace comparison'))
 console.log(c.slice(c.indexOf('Explain the trade'), c.indexOf('Explain the trade')+900))
 check('reply cites compared product data', /4\.0/.test(c) && /3\.8/.test(c))
 await page.screenshot({ path: process.env.SHOT })

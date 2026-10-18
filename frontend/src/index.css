@@ -103,7 +103,8 @@ input[type="checkbox"] { accent-color: var(--color-forest-800); width: 1rem; hei
 @keyframes slide-in-right { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 @keyframes draw { from { stroke-dashoffset: var(--len, 400); } to { stroke-dashoffset: 0; } }
-.page-enter { animation: fade-up 0.32s var(--ease-out-quint) both; }
+/* fill backwards only: a lingering transform (even identity) would make this wrapper the containing block for every position:fixed overlay inside it */
+.page-enter { animation: fade-up 0.32s var(--ease-out-quint) backwards; }
 .stagger > * { animation: fade-up 0.4s var(--ease-out-quint) both; }
 .stagger > *:nth-child(2) { animation-delay: 50ms; } .stagger > *:nth-child(3) { animation-delay: 100ms; }
 .stagger > *:nth-child(4) { animation-delay: 150ms; } .stagger > *:nth-child(5) { animation-delay: 200ms; } .stagger > *:nth-child(6) { animation-delay: 250ms; }
@@ -125,3 +126,5 @@ input[type="range"].split-range { -webkit-appearance: none; appearance: none; po
 .split-range:focus-visible { outline: none; }
 .split-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgb(54 115 106 / 0.45); }
 .split-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgb(54 115 106 / 0.45); }
+@keyframes pop-in { from { transform: scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+.pop-in { animation: pop-in 0.18s var(--ease-out-quint) both; }

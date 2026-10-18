@@ -104,7 +104,7 @@ const split = (page) => page.locator('input.split-range')
   await page.keyboard.press('Escape'); await page.waitForTimeout(250)
   check('Esc closes the panel and focus returns to the trigger', (await page.getByRole('dialog').count()) === 0 && (await trigger.evaluate((e) => e === document.activeElement)))
   await page.getByRole('region', { name: 'Simulation controls' }).locator('xpath=ancestor::section[1]').getByRole('button', { name: 'Explain This Scenario' }).click(); await page.getByRole('dialog').waitFor()
-  await page.getByRole('button', { name: 'Continue in AI Companion' }).click(); await page.waitForURL('**/companion')
+  await page.getByRole('button', { name: 'Continue in AI Companion' }).click(); await page.waitForURL('**/companion'); await page.locator('[data-msg="assistant"]').first().waitFor()
   check('"Continue in AI Companion" shows the same conversation', (await page.locator('main').innerText()).includes('Stub reply for request-shape test.'))
   await browser.close()
 }

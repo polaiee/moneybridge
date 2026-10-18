@@ -13,7 +13,7 @@ export function useAsk(onSent?: () => void) {
   const [busy, setBusy] = useState(false)
   const send = useCallback(async (message: string, opts: { scenario?: boolean; compare?: boolean } = {}): Promise<ChatMsg | null> => {
     const text = message.trim(); if (!text || busy) return null
-    setChat((c) => [...c, { role: 'user', text }]); setBusy(true)
+    setChat((c) => [...c, { role: 'user', text, ask: { scenario: !!opts.scenario, compare: !!opts.compare } }]); setBusy(true)
     const profileLine = shareProfile && profile
       ? `\n\n[User-approved profile — goals: ${profile.goals.map(goalLabel).join(', ') || 'none'}; experience level: ${profile.level}; life stage: ${profile.stage}]` : ''
     let reply: ChatMsg
